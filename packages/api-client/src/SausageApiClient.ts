@@ -14,7 +14,14 @@ import {
   ReleaseSausageProductionBatchInput,
   SausageStockMovementDto,
   WriteOffSausageStockInput,
-  SausageLossDto
+  SausageLossDto,
+  CreateSausageQualityCheckInput,
+  SausageQualityCheckDto,
+  AcceptSausageBatchInput,
+  RejectSausageBatchInput,
+  ApproveSausageLossInput,
+  SausageQualitySummaryDto,
+  SausageLossSummaryDto
 } from 'sausage-shared-types';
 
 export const SAUSAGE_API_NAMESPACE = '/api/sausage-production';
@@ -102,6 +109,30 @@ export class SausageApiClient {
     return this.fetch<SausageProductionBatchDto>('/batches/release', { method: 'POST', body: JSON.stringify(input) });
   }
 
+  checkQuality(id: string, input: CreateSausageQualityCheckInput): Promise<SausageQualityCheckDto> {
+    return this.fetch<SausageQualityCheckDto>(`/batches/${id}/quality-check`, { method: 'POST', body: JSON.stringify(input) });
+  }
+
+  acceptBatch(id: string, input: AcceptSausageBatchInput): Promise<SausageProductionBatchDto> {
+    return this.fetch<SausageProductionBatchDto>(`/batches/${id}/accept`, { method: 'POST', body: JSON.stringify(input) });
+  }
+
+  rejectBatch(id: string, input: RejectSausageBatchInput): Promise<SausageProductionBatchDto> {
+    return this.fetch<SausageProductionBatchDto>(`/batches/${id}/reject`, { method: 'POST', body: JSON.stringify(input) });
+  }
+
+  reopenBatchQuality(id: string): Promise<SausageProductionBatchDto> {
+    return this.fetch<SausageProductionBatchDto>(`/batches/${id}/reopen-quality`, { method: 'POST' });
+  }
+
+  getQualityChecks(): Promise<SausageQualityCheckDto[]> {
+    return this.fetch<SausageQualityCheckDto[]>('/quality-checks');
+  }
+
+  getQualityCheckById(id: string): Promise<SausageQualityCheckDto> {
+    return this.fetch<SausageQualityCheckDto>(`/quality-checks/${id}`);
+  }
+
   // Stock Movements & Losses
   getStockMovements(): Promise<SausageStockMovementDto[]> {
     return this.fetch<SausageStockMovementDto[]>('/stock-movements');
@@ -113,6 +144,14 @@ export class SausageApiClient {
 
   getLosses(): Promise<SausageLossDto[]> {
     return this.fetch<SausageLossDto[]>('/losses');
+  }
+
+  approveLoss(id: string, input: ApproveSausageLossInput): Promise<SausageLossDto> {
+    return this.fetch<SausageLossDto>(`/losses/${id}/approve`, { method: 'POST', body: JSON.stringify(input) });
+  }
+
+  getLossCategories(): Promise<{ categories: string[]; stages: string[]; reasons: string[] }> {
+    return this.fetch<{ categories: string[]; stages: string[]; reasons: string[] }>('/loss-categories');
   }
 
   // Sales Orders
@@ -160,5 +199,14 @@ export class SausageApiClient {
 
   createProductionOrderFromDemand(input: import('sausage-shared-types').CreateProductionOrderFromDemandInput): Promise<void> {
     return this.fetch<void>('/production-demand/create-production-order', { method: 'POST', body: JSON.stringify(input) });
+  }
+
+  // Analytics
+  getQualitySummary(): Promise<SausageQualitySummaryDto> {
+    return this.fetch<SausageQualitySummaryDto>('/analytics/quality-summary');
+  }
+
+  getLossSummary(): Promise<SausageLossSummaryDto> {
+    return this.fetch<SausageLossSummaryDto>('/analytics/loss-summary');
   }
 }

@@ -53,9 +53,9 @@ export const mockSausageProductionData: WorkshopDataset = {
     { id: 'po-4', number: 'PO-250624-014', productName: 'Сервелат Финский', quantityKg: 380, clientName: 'Сеть Восток', status: 'released', progress: 100, dueAt: '2026-06-24 12:30', shift: 'Смена А' },
   ],
   batches: [
-    { id: 'bt-1', batchNo: 'B-260624-07', orderNo: 'PO-260624-001', productName: 'Докторская ГОСТ', producedKg: 312, acceptedKg: 304, rejectedKg: 8, releasedAt: '2026-06-24 13:42', yieldPercent: 91.8 },
-    { id: 'bt-2', batchNo: 'B-260624-06', orderNo: 'PO-250624-014', productName: 'Сервелат Финский', producedKg: 380, acceptedKg: 371, rejectedKg: 9, releasedAt: '2026-06-24 11:20', yieldPercent: 88.4 },
-    { id: 'bt-3', batchNo: 'B-250624-11', orderNo: 'PO-250624-012', productName: 'Сосиски Молочные', producedKg: 540, acceptedKg: 529, rejectedKg: 11, releasedAt: '2026-06-23 19:10', yieldPercent: 90.2 },
+    { id: 'bt-1', batchNo: 'B-260624-07', orderNo: 'PO-260624-001', productName: 'Докторская ГОСТ', producedKg: 312, acceptedKg: 304, rejectedKg: 8, releasedAt: '2026-06-24 13:42', yieldPercent: 91.8, status: 'ACCEPTED', qualityStatus: 'PASSED' },
+    { id: 'bt-2', batchNo: 'B-260624-06', orderNo: 'PO-250624-014', productName: 'Сервелат Финский', producedKg: 380, acceptedKg: 371, rejectedKg: 9, releasedAt: '2026-06-24 11:20', yieldPercent: 88.4, status: 'ACCEPTED', qualityStatus: 'PASSED' },
+    { id: 'bt-3', batchNo: 'B-250624-11', orderNo: 'PO-250624-012', productName: 'Сосиски Молочные', producedKg: 540, acceptedKg: 529, rejectedKg: 11, releasedAt: '2026-06-23 19:10', yieldPercent: 90.2, status: 'RELEASED', qualityStatus: 'NOT_CHECKED' },
   ],
   movements: [
     { id: 'mv-1', docNo: 'MV-260624-045', type: 'transfer_to_workshop', itemName: 'Говядина жилованная', quantityKg: 180, from: 'Склад сырья', to: 'Цех', operator: 'АС', createdAt: '2026-06-24 12:05' },
@@ -64,9 +64,9 @@ export const mockSausageProductionData: WorkshopDataset = {
     { id: 'mv-4', docNo: 'MV-260624-048', type: 'write_off', itemName: 'Оболочка коллагеновая', quantityKg: 3.5, from: 'Цех', to: 'Списание', operator: 'МК', createdAt: '2026-06-24 14:05' },
   ],
   losses: [
-    { id: 'ls-1', docNo: 'LS-260624-009', itemName: 'Докторская ГОСТ', reason: 'thermal_loss', quantityKg: 8, cost: '412 TJS', createdAt: '2026-06-24 13:45', operator: 'АС' },
-    { id: 'ls-2', docNo: 'LS-260624-010', itemName: 'Оболочка коллагеновая', reason: 'defect', quantityKg: 3.5, cost: '96 TJS', createdAt: '2026-06-24 14:05', operator: 'МК' },
-    { id: 'ls-3', docNo: 'LS-250624-021', itemName: 'Сосиски Молочные', reason: 'calibration', quantityKg: 11, cost: '340 TJS', createdAt: '2026-06-23 19:12', operator: 'АС' },
+    { id: 'ls-1', docNo: 'LS-260624-009', itemName: 'Докторская ГОСТ', reason: 'THERMAL_LOSS', category: 'PRODUCTION', stage: 'THERMAL_PROCESSING', quantityKg: 8, cost: '412 TJS', createdAt: '2026-06-24 13:45', operator: 'АС', approvedByUserId: 'user-1' },
+    { id: 'ls-2', docNo: 'LS-260624-010', itemName: 'Оболочка коллагеновая', reason: 'DEFECT', category: 'PACKAGING', stage: 'PACKAGING', quantityKg: 3.5, cost: '96 TJS', createdAt: '2026-06-24 14:05', operator: 'МК' },
+    { id: 'ls-3', docNo: 'LS-250624-021', itemName: 'Сосиски Молочные', reason: 'QUALITY_REJECT', category: 'QUALITY_REJECT', stage: 'QUALITY_CONTROL', quantityKg: 11, cost: '340 TJS', createdAt: '2026-06-23 19:12', operator: 'АС' },
   ],
   dashboard: {
     metrics: [
@@ -79,6 +79,8 @@ export const mockSausageProductionData: WorkshopDataset = {
       { id: 'transfer', label: 'Передача в цех', description: 'Склад -> цех' },
       { id: 'release', label: 'Выпуск продукции', description: 'Цех -> ГП' },
       { id: 'writeOff', label: 'Списание сырья', description: 'Потери и брак' },
+      { id: 'qualityCheck', label: 'Контроль качества', description: 'Проверка партии' },
+      { id: 'approveLoss', label: 'Согласовать потерю', description: 'Утвердить акт' },
       { id: 'order', label: 'Производственный заказ', description: 'План выпуска' },
     ],
     activeOrders: [],

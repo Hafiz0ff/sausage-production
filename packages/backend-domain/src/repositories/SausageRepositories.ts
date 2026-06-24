@@ -6,7 +6,8 @@ import {
   SausageProductionOrderDto,
   SausageProductionBatchDto,
   SausageStockMovementDto,
-  SausageLossDto
+  SausageLossDto,
+  SausageQualityCheckDto
 } from 'sausage-shared-types';
 
 export interface SausageRawMaterialRepository {
@@ -45,7 +46,9 @@ export interface SausageProductionOrderRepository {
 
 export interface SausageProductionBatchRepository {
   findMany(companyId: string): Promise<SausageProductionBatchDto[]>;
+  findById(id: string, companyId: string): Promise<SausageProductionBatchDto | null>;
   create(data: SausageProductionBatchDto): Promise<SausageProductionBatchDto>;
+  update(id: string, companyId: string, data: Partial<SausageProductionBatchDto>): Promise<SausageProductionBatchDto>;
 }
 
 export interface SausageStockMovementRepository {
@@ -55,7 +58,9 @@ export interface SausageStockMovementRepository {
 
 export interface SausageLossRepository {
   findMany(companyId: string): Promise<SausageLossDto[]>;
+  findById(id: string, companyId: string): Promise<SausageLossDto | null>;
   create(data: SausageLossDto): Promise<SausageLossDto>;
+  update(id: string, companyId: string, data: Partial<SausageLossDto>): Promise<SausageLossDto>;
 }
 
 export interface SausageSalesOrderRepository {
@@ -79,6 +84,12 @@ export interface SausageReservationRepository {
   update(id: string, companyId: string, data: Partial<import('sausage-shared-types').SausageFinishedGoodsReservationDto>): Promise<import('sausage-shared-types').SausageFinishedGoodsReservationDto>;
 }
 
+export interface SausageQualityCheckRepository {
+  findMany(companyId: string): Promise<SausageQualityCheckDto[]>;
+  findById(id: string, companyId: string): Promise<SausageQualityCheckDto | null>;
+  create(data: SausageQualityCheckDto): Promise<SausageQualityCheckDto>;
+}
+
 export interface SausageRepositories {
   rawMaterials: SausageRawMaterialRepository;
   finishedProducts: SausageFinishedProductRepository;
@@ -91,6 +102,7 @@ export interface SausageRepositories {
   salesOrders: SausageSalesOrderRepository;
   salesOrderItems: SausageSalesOrderItemRepository;
   reservations: SausageReservationRepository;
+  qualityChecks: SausageQualityCheckRepository;
 
   runTransaction<T>(fn: (tx: SausageRepositories) => Promise<T>): Promise<T>;
 }

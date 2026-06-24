@@ -10,5 +10,6 @@ export * from './routes/sausageProductionRouter';
 export * from './services/SausageProductionService';
 export * from './services/SausageStockService';
 export * from './services/SausageSalesService';
+export * from './services/SausageQualityService';
 export * from './repositories/SausageRepositories';
 export * from './repositories/PrismaSausageRepositories';

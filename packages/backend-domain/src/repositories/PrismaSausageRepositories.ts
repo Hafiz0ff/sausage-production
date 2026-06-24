@@ -6,7 +6,8 @@ import {
   SausageProductionOrderDto,
   SausageProductionBatchDto,
   SausageStockMovementDto,
-  SausageLossDto
+  SausageLossDto,
+  SausageQualityCheckDto
 } from 'sausage-shared-types';
 import { PrismaClient, Prisma } from '@prisma/client';
 import {
@@ -95,6 +96,19 @@ function toOrderDto(row: Prisma.SausageProductionOrderGetPayload<{}>): SausagePr
 function toBatchDto(row: Prisma.SausageProductionBatchGetPayload<{}>): SausageProductionBatchDto {
   return {
     ...row,
+    status: row.status as import('sausage-shared-types').SausageBatchStatus,
+    qualityStatus: row.qualityStatus as import('sausage-shared-types').SausageQualityStatus,
+    plannedQty: row.plannedQty ?? undefined,
+    varianceQty: row.varianceQty ?? undefined,
+    variancePercent: row.variancePercent ?? undefined,
+    masterUserId: row.masterUserId ?? undefined,
+    masterName: row.masterName ?? undefined,
+    operatorUserId: row.operatorUserId ?? undefined,
+    operatorName: row.operatorName ?? undefined,
+    qualityCheckedByUserId: row.qualityCheckedByUserId ?? undefined,
+    qualityCheckedByName: row.qualityCheckedByName ?? undefined,
+    qualityCheckedAt: row.qualityCheckedAt?.toISOString(),
+    qualityNote: row.qualityNote ?? undefined,
     createdAt: row.createdAt.toISOString(),
     updatedAt: row.updatedAt.toISOString()
   } as SausageProductionBatchDto;
@@ -114,13 +128,39 @@ function toMovementDto(row: Prisma.SausageStockMovementGetPayload<{}>): SausageS
 function toLossDto(row: Prisma.SausageLossGetPayload<{}>): SausageLossDto {
   return {
     ...row,
+    reason: row.reason as import('sausage-shared-types').SausageLossReason,
+    category: (row.category as import('sausage-shared-types').SausageLossCategory) ?? undefined,
+    stage: (row.stage as import('sausage-shared-types').SausageLossStage) ?? undefined,
     costAmount: row.costAmount ?? undefined,
     costCurrency: row.costCurrency ?? undefined,
     productionOrderId: row.productionOrderId ?? undefined,
     productionBatchId: row.productionBatchId ?? undefined,
+    isRecoverable: row.isRecoverable ?? undefined,
+    approvedByUserId: row.approvedByUserId ?? undefined,
+    approvedByName: row.approvedByName ?? undefined,
+    approvedAt: row.approvedAt?.toISOString(),
     createdByName: row.createdByName ?? undefined,
     createdAt: row.createdAt.toISOString()
   } as SausageLossDto;
+}
+
+function toQualityCheckDto(row: Prisma.SausageQualityCheckGetPayload<{}>): SausageQualityCheckDto {
+  return {
+    ...row,
+    productionOrderId: row.productionOrderId ?? undefined,
+    batchNo: row.batchNo ?? undefined,
+    finishedProductId: row.finishedProductId ?? undefined,
+    finishedProductName: row.finishedProductName ?? undefined,
+    qualityStatus: row.qualityStatus as import('sausage-shared-types').SausageQualityStatus,
+    temperatureCelsius: row.temperatureCelsius ?? undefined,
+    humidityPercent: row.humidityPercent ?? undefined,
+    sampleWeightQty: row.sampleWeightQty ?? undefined,
+    note: row.note ?? undefined,
+    checkedByName: row.checkedByName ?? undefined,
+    checkedAt: row.checkedAt.toISOString(),
+    createdAt: row.createdAt.toISOString(),
+    updatedAt: row.updatedAt.toISOString()
+  } as SausageQualityCheckDto;
 }
 
 type SalesOrderWithItems = Prisma.SausageSalesOrderGetPayload<{ include: { items: true } }>;
@@ -422,6 +462,11 @@ export class PrismaSausageRepositories implements SausageRepositories {
       const rows = await this.prisma.sausageProductionBatch.findMany({ where: { companyId } });
       return rows.map(toBatchDto);
     },
+    findById: async (id, companyId) => {
+      const r = await this.prisma.sausageProductionBatch.findFirst({ where: { id, companyId } });
+      if (!r) return null;
+      return toBatchDto(r);
+    },
     create: async (data) => {
       const r = await this.prisma.sausageProductionBatch.create({
         data: {
@@ -436,12 +481,54 @@ export class PrismaSausageRepositories implements SausageRepositories {
           acceptedQty: data.acceptedQty,
           rejectedQty: data.rejectedQty,
           yieldPercent: data.yieldPercent,
+          status: data.status,
+          qualityStatus: data.qualityStatus,
+          plannedQty: data.plannedQty,
+          varianceQty: data.varianceQty,
+          variancePercent: data.variancePercent,
+          masterUserId: data.masterUserId,
+          masterName: data.masterName,
+          operatorUserId: data.operatorUserId,
+          operatorName: data.operatorName,
+          qualityCheckedByUserId: data.qualityCheckedByUserId,
+          qualityCheckedByName: data.qualityCheckedByName,
+          qualityCheckedAt: data.qualityCheckedAt ? new Date(data.qualityCheckedAt) : null,
+          qualityNote: data.qualityNote,
           releasedAt: data.releasedAt,
           createdAt: new Date(data.createdAt),
           updatedAt: new Date(data.updatedAt)
         }
       });
       return toBatchDto(r);
+    },
+    update: async (id, companyId, data) => {
+      const result = await this.prisma.sausageProductionBatch.updateMany({
+        where: { id, companyId },
+        data: {
+          producedQty: data.producedQty,
+          acceptedQty: data.acceptedQty,
+          rejectedQty: data.rejectedQty,
+          yieldPercent: data.yieldPercent,
+          status: data.status,
+          qualityStatus: data.qualityStatus,
+          plannedQty: data.plannedQty,
+          varianceQty: data.varianceQty,
+          variancePercent: data.variancePercent,
+          masterUserId: data.masterUserId,
+          masterName: data.masterName,
+          operatorUserId: data.operatorUserId,
+          operatorName: data.operatorName,
+          qualityCheckedByUserId: data.qualityCheckedByUserId,
+          qualityCheckedByName: data.qualityCheckedByName,
+          qualityCheckedAt: data.qualityCheckedAt ? new Date(data.qualityCheckedAt) : null,
+          qualityNote: data.qualityNote,
+          updatedAt: data.updatedAt ? new Date(data.updatedAt) : new Date()
+        }
+      });
+      await assertUpdated(result.count);
+      const updated = await this.batches.findById(id, companyId);
+      if (!updated) throw new Error('Not found');
+      return updated;
     }
   };
 
@@ -480,6 +567,11 @@ export class PrismaSausageRepositories implements SausageRepositories {
       const rows = await this.prisma.sausageLoss.findMany({ where: { companyId } });
       return rows.map(toLossDto);
     },
+    findById: async (id, companyId) => {
+      const r = await this.prisma.sausageLoss.findFirst({ where: { id, companyId } });
+      if (!r) return null;
+      return toLossDto(r);
+    },
     create: async (data) => {
       const r = await this.prisma.sausageLoss.create({
         data: {
@@ -490,17 +582,46 @@ export class PrismaSausageRepositories implements SausageRepositories {
           itemId: data.itemId,
           itemName: data.itemName,
           reason: data.reason,
+          category: data.category,
+          stage: data.stage,
           quantityQty: data.quantityQty,
           costAmount: data.costAmount,
           costCurrency: data.costCurrency,
           productionOrderId: data.productionOrderId,
           productionBatchId: data.productionBatchId,
+          isRecoverable: data.isRecoverable,
+          approvedByUserId: data.approvedByUserId,
+          approvedByName: data.approvedByName,
+          approvedAt: data.approvedAt ? new Date(data.approvedAt) : null,
           createdByUserId: data.createdByUserId,
           createdByName: data.createdByName,
           createdAt: new Date(data.createdAt)
         }
       });
       return toLossDto(r);
+    },
+    update: async (id, companyId, data) => {
+      const result = await this.prisma.sausageLoss.updateMany({
+        where: { id, companyId },
+        data: {
+          reason: data.reason,
+          category: data.category,
+          stage: data.stage,
+          quantityQty: data.quantityQty,
+          costAmount: data.costAmount,
+          costCurrency: data.costCurrency,
+          productionOrderId: data.productionOrderId,
+          productionBatchId: data.productionBatchId,
+          isRecoverable: data.isRecoverable,
+          approvedByUserId: data.approvedByUserId,
+          approvedByName: data.approvedByName,
+          approvedAt: data.approvedAt ? new Date(data.approvedAt) : null,
+        }
+      });
+      await assertUpdated(result.count);
+      const updated = await this.losses.findById(id, companyId);
+      if (!updated) throw new Error('Not found');
+      return updated;
     }
   };
 
@@ -661,6 +782,45 @@ export class PrismaSausageRepositories implements SausageRepositories {
       const updated = await this.reservations.findById(id, companyId);
       if (!updated) throw new Error('Not found');
       return updated;
+    }
+  };
+
+  readonly qualityChecks: import('./SausageRepositories').SausageQualityCheckRepository = {
+    findMany: async (companyId) => {
+      const rows = await this.prisma.sausageQualityCheck.findMany({ where: { companyId } });
+      return rows.map(toQualityCheckDto);
+    },
+    findById: async (id, companyId) => {
+      const r = await this.prisma.sausageQualityCheck.findFirst({ where: { id, companyId } });
+      if (!r) return null;
+      return toQualityCheckDto(r);
+    },
+    create: async (data) => {
+      const r = await this.prisma.sausageQualityCheck.create({
+        data: {
+          id: data.id,
+          companyId: data.companyId,
+          productionBatchId: data.productionBatchId,
+          productionOrderId: data.productionOrderId,
+          batchNo: data.batchNo,
+          finishedProductId: data.finishedProductId,
+          finishedProductName: data.finishedProductName,
+          checkedQty: data.checkedQty,
+          acceptedQty: data.acceptedQty,
+          rejectedQty: data.rejectedQty,
+          qualityStatus: data.qualityStatus,
+          temperatureCelsius: data.temperatureCelsius,
+          humidityPercent: data.humidityPercent,
+          sampleWeightQty: data.sampleWeightQty,
+          note: data.note,
+          checkedByUserId: data.checkedByUserId,
+          checkedByName: data.checkedByName,
+          checkedAt: new Date(data.checkedAt),
+          createdAt: new Date(data.createdAt),
+          updatedAt: new Date(data.updatedAt)
+        }
+      });
+      return toQualityCheckDto(r);
     }
   };
 

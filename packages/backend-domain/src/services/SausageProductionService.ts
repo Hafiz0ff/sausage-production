@@ -229,7 +229,9 @@ export class SausageProductionService {
         producedQty: input.producedQty,
         acceptedQty: input.acceptedQty,
         rejectedQty: input.rejectedQty,
-        yieldPercent,
+        yieldPercent: yieldPercent,
+        status: 'RELEASED',
+        qualityStatus: 'NOT_CHECKED',
         releasedAt: now,
         createdAt: now,
         updatedAt: now

@@ -128,9 +128,12 @@ export const sausageProductionApi = {
         itemName: l.itemName,
         reason: l.reason as LossReason,
         quantityKg: l.quantityQty,
+        category: l.category,
+        stage: l.stage,
         cost: l.costAmount?.toString() || '0',
         createdAt: l.createdAt,
-        operator: l.createdByUserId
+        operator: l.createdByUserId,
+        approvedByUserId: l.approvedByUserId
       }))
     };
 
@@ -239,7 +242,9 @@ export const sausageProductionApi = {
         acceptedKg: b.acceptedQty,
         rejectedKg: b.rejectedQty,
         releasedAt: b.releasedAt,
-        yieldPercent: b.yieldPercent
+        yieldPercent: b.yieldPercent,
+        status: b.status,
+        qualityStatus: b.qualityStatus
       })),
       movements: movementsDto.map(m => ({
         id: m.id,
@@ -258,9 +263,12 @@ export const sausageProductionApi = {
         itemName: l.itemName,
         reason: l.reason as LossReason,
         quantityKg: l.quantityQty,
+        category: l.category,
+        stage: l.stage,
         cost: l.costAmount?.toString() || '0',
         createdAt: l.createdAt,
-        operator: l.createdByUserId
+        operator: l.createdByUserId,
+        approvedByUserId: l.approvedByUserId
       })),
       dashboard
     };
@@ -327,6 +335,18 @@ export const sausageProductionApi = {
         await apiClient.createProductionOrderFromDemand({
           finishedProductId: 'prod-1',
           quantityQty: 50
+        });
+      } else if (kind === 'qualityCheck') {
+        await apiClient.checkQuality('batch-1', {
+          checkedQty: 100,
+          acceptedQty: 95,
+          rejectedQty: 5,
+          temperatureCelsius: 4,
+          humidityPercent: 60
+        });
+      } else if (kind === 'approveLoss') {
+        await apiClient.approveLoss('loss-1', {
+          note: 'Approved from dashboard'
         });
       }
 

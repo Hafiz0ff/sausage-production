@@ -22,6 +22,8 @@ const quickActionIcons: Record<ModalKind, typeof Truck> = {
   client: Plus,
   salesOrder: Plus,
   createDemandOrder: Plus,
+  qualityCheck: PackageCheck,
+  approveLoss: PackageCheck,
 };
 
 export function DashboardScreen({ dashboard, onOpenModal }: DashboardScreenProps) {

@@ -2,11 +2,13 @@ import { Router, Request, Response, NextFunction } from 'express';
 import { SausageStockService } from '../services/SausageStockService';
 import { SausageProductionService } from '../services/SausageProductionService';
 import { SausageSalesService } from '../services/SausageSalesService';
+import { SausageQualityService } from '../services/SausageQualityService';
 
 export function createSausageProductionRouter(
   stockService: SausageStockService,
   productionService: SausageProductionService,
-  salesService: SausageSalesService
+  salesService: SausageSalesService,
+  qualityService: SausageQualityService
 ): Router {
   const router = Router();
 
@@ -133,6 +135,40 @@ export function createSausageProductionRouter(
     res.status(200).json(batch);
   }));
 
+  router.post('/batches/:id/quality-check', asyncHandler(async (req, res) => {
+    const qc = await qualityService.checkQuality(req.params.id, req.body);
+    res.status(201).json(qc);
+  }));
+
+  router.post('/batches/:id/accept', asyncHandler(async (req, res) => {
+    const batch = await qualityService.acceptBatch(req.params.id, req.body);
+    res.status(200).json(batch);
+  }));
+
+  router.post('/batches/:id/reject', asyncHandler(async (req, res) => {
+    const batch = await qualityService.rejectBatch(req.params.id, req.body);
+    res.status(200).json(batch);
+  }));
+
+  router.post('/batches/:id/reopen-quality', asyncHandler(async (req, res) => {
+    const batch = await qualityService.reopenQuality(req.params.id);
+    res.status(200).json(batch);
+  }));
+
+  // Quality Checks
+  router.get('/quality-checks', asyncHandler(async (req, res) => {
+    res.json(await qualityService.getQualityChecks());
+  }));
+
+  router.get('/quality-checks/:id', asyncHandler(async (req, res) => {
+    const qualityCheck = await qualityService.getQualityCheckById(req.params.id);
+    if (!qualityCheck) {
+      res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Not found' } });
+      return;
+    }
+    res.json(qualityCheck);
+  }));
+
   // Stock Movements
   router.get('/stock-movements', asyncHandler(async (req, res) => {
     res.json(await stockService.getStockMovements());
@@ -152,6 +188,15 @@ export function createSausageProductionRouter(
     res.json(await stockService.getLosses());
   }));
 
+  router.post('/losses/:id/approve', asyncHandler(async (req, res) => {
+    const loss = await qualityService.approveLoss(req.params.id, req.body);
+    res.status(200).json(loss);
+  }));
+
+  router.get('/loss-categories', asyncHandler(async (req, res) => {
+    res.json(qualityService.getLossCategories());
+  }));
+
   // Analytics
   router.get('/analytics/summary', asyncHandler(async (req, res) => {
     const batches = await productionService.getBatches();
@@ -161,6 +206,14 @@ export function createSausageProductionRouter(
       totalAcceptedQty: batches.reduce((sum, batch) => sum + batch.acceptedQty, 0),
       totalLossQty: losses.reduce((sum, loss) => sum + loss.quantityQty, 0)
     });
+  }));
+
+  router.get('/analytics/quality-summary', asyncHandler(async (req, res) => {
+    res.json(await qualityService.getQualitySummary());
+  }));
+
+  router.get('/analytics/loss-summary', asyncHandler(async (req, res) => {
+    res.json(await qualityService.getLossSummary());
   }));
 
   // Sales Orders

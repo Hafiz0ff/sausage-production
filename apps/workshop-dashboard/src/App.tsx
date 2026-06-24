@@ -28,7 +28,9 @@ const modalTitles: Record<ModalKind, string> = {
   recipe: 'Новая рецептура',
   client: 'Новый клиент',
   salesOrder: 'Новый заказ клиента',
-  createDemandOrder: 'Новый производственный заказ'
+  createDemandOrder: 'Новый производственный заказ',
+  qualityCheck: 'Контроль качества',
+  approveLoss: 'Согласовать потерю'
 };
 
 export default function App() {
@@ -217,6 +219,45 @@ function OperationForm({
           <input className="form-input" type="number" value={Math.max(releaseProducedKg - releaseAcceptedKg, 0)} readOnly />
         </label>
         {releaseError ? <p className="form-error">{releaseError}</p> : null}
+        {submittedMessage ? <p className="form-success">{submittedMessage}</p> : null}
+      </div>
+    );
+  }
+
+  if (kind === 'qualityCheck') {
+    return (
+      <div className="form-grid">
+        <label className="form-group">
+          <span className="form-label">Партия</span>
+          <select className="form-input" defaultValue="B-260624-07">
+            <option>B-260624-07 / Докторская ГОСТ</option>
+            <option>B-260624-06 / Сервелат Финский</option>
+          </select>
+        </label>
+        <label className="form-group">
+          <span className="form-label">Проверено, кг</span>
+          <input className="form-input" type="number" defaultValue={100} />
+        </label>
+        <label className="form-group">
+          <span className="form-label">Принято, кг</span>
+          <input className="form-input" type="number" defaultValue={95} />
+        </label>
+        <label className="form-group">
+          <span className="form-label">Брак, кг</span>
+          <input className="form-input" type="number" defaultValue={5} />
+        </label>
+        {submittedMessage ? <p className="form-success">{submittedMessage}</p> : null}
+      </div>
+    );
+  }
+
+  if (kind === 'approveLoss') {
+    return (
+      <div className="form-grid">
+        <label className="form-group">
+          <span className="form-label">Примечание</span>
+          <textarea className="form-input form-textarea" defaultValue="Одобрено" />
+        </label>
         {submittedMessage ? <p className="form-success">{submittedMessage}</p> : null}
       </div>
     );

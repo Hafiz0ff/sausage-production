@@ -128,6 +128,23 @@ model SausageProductionBatch {
   acceptedQty           Float    @map("accepted_qty")
   rejectedQty           Float    @map("rejected_qty")
   yieldPercent          Float    @map("yield_percent")
+  
+  status                String   @default("RELEASED")
+  qualityStatus         String   @map("quality_status") @default("NOT_CHECKED")
+  plannedQty            Float?   @map("planned_qty")
+  varianceQty           Float?   @map("variance_qty")
+  variancePercent       Float?   @map("variance_percent")
+  
+  masterUserId          String?  @map("master_user_id")
+  masterName            String?  @map("master_name")
+  operatorUserId        String?  @map("operator_user_id")
+  operatorName          String?  @map("operator_name")
+  
+  qualityCheckedByUserId String? @map("quality_checked_by_user_id")
+  qualityCheckedByName   String? @map("quality_checked_by_name")
+  qualityCheckedAt       DateTime? @map("quality_checked_at")
+  qualityNote            String? @map("quality_note")
+  
   releasedAt            String   @map("released_at")
   createdAt             DateTime @default(now()) @map("created_at")
   updatedAt             DateTime @updatedAt @map("updated_at")
@@ -166,11 +183,17 @@ model SausageLoss {
   itemId            String   @map("item_id")
   itemName          String   @map("item_name")
   reason            String
+  category          String?
+  stage             String?
   quantityQty       Float    @map("quantity_qty")
   costAmount        Float?   @map("cost_amount")
   costCurrency      String?  @map("cost_currency")
   productionOrderId String?  @map("production_order_id")
   productionBatchId String?  @map("production_batch_id")
+  isRecoverable     Boolean? @map("is_recoverable") @default(false)
+  approvedByUserId  String?  @map("approved_by_user_id")
+  approvedByName    String?  @map("approved_by_name")
+  approvedAt        DateTime? @map("approved_at")
   createdByUserId   String   @map("created_by_user_id")
   createdByName     String?  @map("created_by_name")
   createdAt         DateTime @default(now()) @map("created_at")
@@ -238,4 +261,31 @@ model SausageFinishedGoodsReservation {
 
   @@index([companyId])
   @@map("sausage_finished_goods_reservations")
+}
+
+model SausageQualityCheck {
+  id                  String   @id @default(uuid())
+  companyId           String   @map("company_id")
+  productionBatchId   String   @map("production_batch_id")
+  productionOrderId   String?  @map("production_order_id")
+  batchNo             String?  @map("batch_no")
+  finishedProductId   String?  @map("finished_product_id")
+  finishedProductName String?  @map("finished_product_name")
+  checkedQty          Float    @map("checked_qty")
+  acceptedQty         Float    @map("accepted_qty")
+  rejectedQty         Float    @map("rejected_qty")
+  qualityStatus       String   @map("quality_status")
+  temperatureCelsius  Float?   @map("temperature_celsius")
+  humidityPercent     Float?   @map("humidity_percent")
+  sampleWeightQty     Float?   @map("sample_weight_qty")
+  note                String?
+  checkedByUserId     String   @map("checked_by_user_id")
+  checkedByName       String?  @map("checked_by_name")
+  checkedAt           DateTime @map("checked_at")
+  createdAt           DateTime @default(now()) @map("created_at")
+  updatedAt           DateTime @updatedAt @map("updated_at")
+
+  @@index([companyId])
+  @@index([productionBatchId])
+  @@map("sausage_quality_checks")
 }

@@ -33,6 +33,9 @@ export type SausageLossReason =
   | 'DEFECT'
   | 'EXPIRY'
   | 'CALIBRATION'
+  | 'PACKAGING_DAMAGE'
+  | 'QUALITY_REJECT'
+  | 'WEIGHT_VARIANCE'
   | 'OTHER';
 
 export type SausageSalesOrderStatus =
@@ -50,3 +53,37 @@ export type SausageReservationStatus =
   | 'RELEASED'
   | 'COMPLETED'
   | 'CANCELLED';
+
+export type SausageBatchStatus =
+  | 'DRAFT'
+  | 'RELEASED'
+  | 'QUALITY_PENDING'
+  | 'ACCEPTED'
+  | 'REJECTED'
+  | 'PARTIALLY_ACCEPTED'
+  | 'CANCELLED';
+
+export type SausageQualityStatus =
+  | 'NOT_CHECKED'
+  | 'PASSED'
+  | 'FAILED'
+  | 'PARTIAL';
+
+export type SausageLossCategory =
+  | 'RAW_MATERIAL'
+  | 'PRODUCTION'
+  | 'QUALITY_REJECT'
+  | 'PACKAGING'
+  | 'EXPIRY'
+  | 'ADJUSTMENT'
+  | 'OTHER';
+
+export type SausageLossStage =
+  | 'RAW_WAREHOUSE'
+  | 'WORKSHOP_PREP'
+  | 'MIXING'
+  | 'THERMAL_PROCESSING'
+  | 'PACKAGING'
+  | 'FINISHED_WAREHOUSE'
+  | 'QUALITY_CONTROL'
+  | 'OTHER';

@@ -32,7 +32,16 @@ export type MovementType =
   | 'write_off'
   | 'adjustment';
 
-export type LossReason = 'trimming' | 'thermal_loss' | 'defect' | 'expiry' | 'calibration';
+export type LossReason =
+  | 'TRIMMING'
+  | 'THERMAL_LOSS'
+  | 'DEFECT'
+  | 'EXPIRY'
+  | 'CALIBRATION'
+  | 'PACKAGING_DAMAGE'
+  | 'QUALITY_REJECT'
+  | 'WEIGHT_VARIANCE'
+  | 'OTHER';
 
 export type StatusTone = 'accent' | 'success' | 'warning' | 'danger' | 'info' | 'neutral';
 
@@ -113,6 +122,8 @@ export interface ProductionBatch {
   rejectedKg: number;
   releasedAt: string;
   yieldPercent: number;
+  status?: string;
+  qualityStatus?: string;
 }
 
 export interface StockMovement {
@@ -132,10 +143,13 @@ export interface LossRecord {
   docNo: string;
   itemName: string;
   reason: LossReason;
+  category?: string;
+  stage?: string;
   quantityKg: number;
   cost: string;
   createdAt: string;
   operator: string;
+  approvedByUserId?: string;
 }
 
 export interface ActivityEvent {
@@ -176,7 +190,9 @@ export type ModalKind =
   | 'recipe'
   | 'client'
   | 'salesOrder'
-  | 'createDemandOrder';
+  | 'createDemandOrder'
+  | 'qualityCheck'
+  | 'approveLoss';
 
 export interface SalesOrder {
   id: string;

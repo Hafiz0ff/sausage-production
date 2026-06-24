@@ -153,6 +153,8 @@ export async function seedDemoSausageData(repos: SausageRepositories, companyId 
       acceptedQty: 95,
       rejectedQty: 5,
       yieldPercent: 90.5,
+      status: 'RELEASED',
+      qualityStatus: 'NOT_CHECKED',
       releasedAt: now,
       createdAt: now,
       updatedAt: now

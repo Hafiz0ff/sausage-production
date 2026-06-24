@@ -6,7 +6,8 @@ import {
   SausageProductionOrderDto,
   SausageProductionBatchDto,
   SausageStockMovementDto,
-  SausageLossDto
+  SausageLossDto,
+  SausageQualityCheckDto
 } from 'sausage-shared-types';
 import {
   SausageRepositories,
@@ -32,6 +33,7 @@ export class InMemoryRepositories implements SausageRepositories {
   private salesOrdersData: import('sausage-shared-types').SausageSalesOrderDto[] = [];
   private salesOrderItemsData: import('sausage-shared-types').SausageSalesOrderItemDto[] = [];
   private reservationsData: import('sausage-shared-types').SausageFinishedGoodsReservationDto[] = [];
+  private qualityChecksData: SausageQualityCheckDto[] = [];
 
   private salesOrderWithItems(order: import('sausage-shared-types').SausageSalesOrderDto): import('sausage-shared-types').SausageSalesOrderDto {
     return {
@@ -96,7 +98,14 @@ export class InMemoryRepositories implements SausageRepositories {
 
   readonly batches: SausageProductionBatchRepository = {
     findMany: async (companyId) => this.batchesData.filter(x => x.companyId === companyId),
-    create: async (data) => { this.batchesData.push(data); return data; }
+    findById: async (id, companyId) => this.batchesData.find(x => x.id === id && x.companyId === companyId) || null,
+    create: async (data) => { this.batchesData.push(data); return data; },
+    update: async (id, companyId, data) => {
+      const idx = this.batchesData.findIndex(x => x.id === id && x.companyId === companyId);
+      if (idx === -1) throw new Error('Not found');
+      this.batchesData[idx] = { ...this.batchesData[idx], ...data };
+      return this.batchesData[idx];
+    }
   };
 
   readonly movements: SausageStockMovementRepository = {
@@ -106,7 +115,14 @@ export class InMemoryRepositories implements SausageRepositories {
 
   readonly losses: SausageLossRepository = {
     findMany: async (companyId) => this.lossesData.filter(x => x.companyId === companyId),
-    create: async (data) => { this.lossesData.push(data); return data; }
+    findById: async (id, companyId) => this.lossesData.find(x => x.id === id && x.companyId === companyId) || null,
+    create: async (data) => { this.lossesData.push(data); return data; },
+    update: async (id, companyId, data) => {
+      const idx = this.lossesData.findIndex(x => x.id === id && x.companyId === companyId);
+      if (idx === -1) throw new Error('Not found');
+      this.lossesData[idx] = { ...this.lossesData[idx], ...data };
+      return this.lossesData[idx];
+    }
   };
 
   readonly salesOrders: import('./SausageRepositories').SausageSalesOrderRepository = {
@@ -148,6 +164,12 @@ export class InMemoryRepositories implements SausageRepositories {
     }
   };
 
+  readonly qualityChecks: import('./SausageRepositories').SausageQualityCheckRepository = {
+    findMany: async (companyId) => this.qualityChecksData.filter(x => x.companyId === companyId),
+    findById: async (id, companyId) => this.qualityChecksData.find(x => x.id === id && x.companyId === companyId) || null,
+    create: async (data) => { this.qualityChecksData.push(data); return data; }
+  };
+
   async runTransaction<T>(fn: (tx: SausageRepositories) => Promise<T>): Promise<T> {
     // In memory, we just run it directly. For real rollback we would clone states, but this is sufficient for tests.
     return fn(this);
@@ -165,5 +187,6 @@ export class InMemoryRepositories implements SausageRepositories {
     this.salesOrdersData = [];
     this.salesOrderItemsData = [];
     this.reservationsData = [];
+    this.qualityChecksData = [];
   }
 }

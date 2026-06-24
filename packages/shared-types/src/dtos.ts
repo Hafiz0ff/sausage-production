@@ -1,4 +1,7 @@
-import { SausageStockLocation, SausageStockStatus, SausageProductionOrderStatus, SausageMovementType, SausageLossReason } from './domain-enums';
+import { 
+  SausageStockLocation, SausageStockStatus, SausageProductionOrderStatus, SausageMovementType, SausageLossReason,
+  SausageSalesOrderStatus, SausageReservationStatus, SausageBatchStatus, SausageQualityStatus, SausageLossCategory, SausageLossStage 
+} from './domain-enums';
 
 export interface SausageRawMaterialDto {
   id: string;
@@ -94,6 +97,19 @@ export interface SausageProductionBatchDto {
   acceptedQty: number;
   rejectedQty: number;
   yieldPercent: number;
+  status: SausageBatchStatus;
+  qualityStatus: SausageQualityStatus;
+  plannedQty?: number;
+  varianceQty?: number;
+  variancePercent?: number;
+  masterUserId?: string;
+  masterName?: string;
+  operatorUserId?: string;
+  operatorName?: string;
+  qualityCheckedByUserId?: string;
+  qualityCheckedByName?: string;
+  qualityCheckedAt?: string;
+  qualityNote?: string;
   releasedAt: string;
   createdAt: string;
   updatedAt: string;
@@ -126,11 +142,17 @@ export interface SausageLossDto {
   itemId: string;
   itemName: string;
   reason: SausageLossReason;
+  category?: SausageLossCategory;
+  stage?: SausageLossStage;
   quantityQty: number;
   costAmount?: number;
   costCurrency?: 'TJS' | 'USD';
   productionOrderId?: string;
   productionBatchId?: string;
+  isRecoverable?: boolean;
+  approvedByUserId?: string;
+  approvedByName?: string;
+  approvedAt?: string;
   createdByUserId: string;
   createdByName?: string;
   createdAt: string;
@@ -180,6 +202,8 @@ export interface ReleaseSausageProductionBatchInput {
   acceptedQty: number;
   rejectedQty: number;
   lossReason?: SausageLossReason;
+  lossCategory?: SausageLossCategory;
+  lossStage?: SausageLossStage;
   note?: string;
 }
 
@@ -221,7 +245,7 @@ export interface SausageSalesOrderDto {
   clientId?: string;
   clientName?: string;
   externalOrderId?: string;
-  status: import('./domain-enums').SausageSalesOrderStatus;
+  status: SausageSalesOrderStatus;
   requestedDate?: string;
   dueDate?: string;
   note?: string;
@@ -253,7 +277,7 @@ export interface SausageFinishedGoodsReservationDto {
   finishedProductId: string;
   finishedProductName: string;
   quantityQty: number;
-  status: import('./domain-enums').SausageReservationStatus;
+  status: SausageReservationStatus;
   createdByUserId: string;
   createdByName?: string;
   createdAt: string;
@@ -298,4 +322,70 @@ export interface CreateProductionOrderFromDemandInput {
   salesOrderItemId?: string;
   dueAt?: string;
   note?: string;
+}
+
+export interface SausageQualityCheckDto {
+  id: string;
+  companyId: string;
+  productionBatchId: string;
+  productionOrderId?: string;
+  batchNo?: string;
+  finishedProductId?: string;
+  finishedProductName?: string;
+  checkedQty: number;
+  acceptedQty: number;
+  rejectedQty: number;
+  qualityStatus: SausageQualityStatus;
+  temperatureCelsius?: number;
+  humidityPercent?: number;
+  sampleWeightQty?: number;
+  note?: string;
+  checkedByUserId: string;
+  checkedByName?: string;
+  checkedAt: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateSausageQualityCheckInput {
+  checkedQty: number;
+  acceptedQty: number;
+  rejectedQty: number;
+  temperatureCelsius?: number;
+  humidityPercent?: number;
+  sampleWeightQty?: number;
+  note?: string;
+}
+
+export interface AcceptSausageBatchInput {
+  note?: string;
+}
+
+export interface RejectSausageBatchInput {
+  note?: string;
+}
+
+export interface ApproveSausageLossInput {
+  note?: string;
+}
+
+export interface SausageQualitySummaryDto {
+  totalBatches: number;
+  acceptedBatches: number;
+  rejectedBatches: number;
+  partialBatches: number;
+  totalProducedQty: number;
+  totalAcceptedQty: number;
+  totalRejectedQty: number;
+  averageYieldPercent: number;
+  averageVariancePercent: number;
+}
+
+export interface SausageLossSummaryDto {
+  totalLossQty: number;
+  lossQtyByCategory: Record<string, number>;
+  lossQtyByStage: Record<string, number>;
+  lossQtyByReason: Record<string, number>;
+  approvedLossCount: number;
+  unapprovedLossCount: number;
 }
