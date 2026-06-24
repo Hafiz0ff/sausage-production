@@ -6,5 +6,5 @@ build/
 !.env.example
 .DS_Store
 coverage/
+output/
 *.log
-
