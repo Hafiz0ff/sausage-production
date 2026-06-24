@@ -2,6 +2,7 @@ import {
   SausageRawMaterialDto,
   SausageFinishedProductDto,
   SausageRecipeDto,
+  SausageClientDto,
   SausageProductionOrderDto,
   SausageProductionBatchDto,
   SausageStockMovementDto,
@@ -12,6 +13,7 @@ export class InMemoryRepositories {
   rawMaterials: SausageRawMaterialDto[] = [];
   finishedProducts: SausageFinishedProductDto[] = [];
   recipes: SausageRecipeDto[] = [];
+  clients: SausageClientDto[] = [];
   orders: SausageProductionOrderDto[] = [];
   batches: SausageProductionBatchDto[] = [];
   movements: SausageStockMovementDto[] = [];
@@ -23,6 +25,7 @@ export class InMemoryRepositories {
     this.rawMaterials = [];
     this.finishedProducts = [];
     this.recipes = [];
+    this.clients = [];
     this.orders = [];
     this.batches = [];
     this.movements = [];

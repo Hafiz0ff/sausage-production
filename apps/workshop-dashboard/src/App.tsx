@@ -34,9 +34,23 @@ export default function App() {
   const [releaseProducedKg, setReleaseProducedKg] = useState(300);
   const [releaseAcceptedKg, setReleaseAcceptedKg] = useState(304);
   const [submittedMessage, setSubmittedMessage] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+
+  const fetchDataset = () => {
+    setIsLoading(true);
+    setError(null);
+    sausageProductionApi.getDataset()
+      .then(setDataset)
+      .catch((err) => {
+        console.error(err);
+        setError('Не удалось загрузить данные. Проверьте подключение к API.');
+      })
+      .finally(() => setIsLoading(false));
+  };
 
   useEffect(() => {
-    void sausageProductionApi.getDataset().then(setDataset);
+    fetchDataset();
   }, []);
 
   const releaseError = useMemo(() => {
@@ -57,15 +71,31 @@ export default function App() {
       return;
     }
 
-    const result = await sausageProductionApi.submitAction(activeModal);
-    setSubmittedMessage(result.message);
+    try {
+      const result = await sausageProductionApi.submitAction(activeModal);
+      setSubmittedMessage(result.message);
+      fetchDataset(); // Refresh data after successful action
+    } catch (err: any) {
+      console.error(err);
+      setSubmittedMessage(`Ошибка выполнения операции: ${err.message || 'Неизвестная ошибка'}`);
+    }
   };
 
-  if (!dataset) {
+  if (error) {
+    return (
+      <main className="loading-shell" style={{ color: 'var(--color-danger)' }}>
+        <h1>Ошибка</h1>
+        <p>{error}</p>
+        <button className="btn btn-primary" onClick={fetchDataset} style={{ marginTop: '1rem' }}>Повторить попытку</button>
+      </main>
+    );
+  }
+
+  if (isLoading || !dataset) {
     return (
       <main className="loading-shell">
         <h1>Колбасный цех</h1>
-        <p>Sausage Workshop</p>
+        <p>Sausage Workshop (Загрузка...)</p>
       </main>
     );
   }

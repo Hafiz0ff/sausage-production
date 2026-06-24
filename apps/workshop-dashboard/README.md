@@ -12,15 +12,33 @@ Do not integrate this UI as a Siyoma dashboard tab and do not use `/api/producti
 
 ## Run
 
+Mock mode:
+
 ```bash
 npm install
-npm run dev -- --port 5174
+npm run dev:ui
 ```
+
+Real API mode:
+
+```bash
+npm install
+npm run dev:api
+VITE_SAUSAGE_API_MODE=real VITE_SAUSAGE_API_BASE_URL=/api/sausage-production npm run dev:ui
+```
+
+Backend dev server:
+
+```text
+http://127.0.0.1:4014/api/sausage-production/*
+```
+
+Vite proxies `/api/sausage-production/*` to the backend dev server.
 
 ## Verify
 
 ```bash
-npm test -- --run
-npm run typecheck
+npm test
 npm run build
+npm run check:architecture
 ```

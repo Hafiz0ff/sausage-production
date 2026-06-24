@@ -22,6 +22,21 @@ export class SausageProductionService {
     return this.repos.orders.filter(o => o.companyId === user.companyId);
   }
 
+  async getRecipes() {
+    const user = this.authPort.getCurrentUser();
+    return this.repos.recipes.filter(recipe => recipe.companyId === user.companyId);
+  }
+
+  async getClients() {
+    const user = this.authPort.getCurrentUser();
+    return this.repos.clients.filter(client => client.companyId === user.companyId);
+  }
+
+  async getBatches(): Promise<SausageProductionBatchDto[]> {
+    const user = this.authPort.getCurrentUser();
+    return this.repos.batches.filter(batch => batch.companyId === user.companyId);
+  }
+
   async createOrder(input: CreateSausageProductionOrderInput): Promise<SausageProductionOrderDto> {
     if (input.quantityQty <= 0) {
       throw { error: { code: SAUSAGE_ERROR_CODES.VALIDATION_ERROR, message: 'Quantity must be > 0' } };

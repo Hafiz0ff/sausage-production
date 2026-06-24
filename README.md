@@ -49,6 +49,56 @@
 - [Siyoma Integration](./docs/architecture/SIYOMA_INTEGRATION.md)
 - [Roadmap](./docs/plans/ROADMAP.md)
 
+## Local Development
+
+Install dependencies:
+
+```bash
+npm install
+```
+
+Run the backend API dev server:
+
+```bash
+npm run dev:api
+```
+
+It serves:
+
+```text
+http://127.0.0.1:4014/api/sausage-production/*
+```
+
+Run the workshop frontend:
+
+```bash
+npm run dev:ui
+```
+
+The frontend Vite server proxies `/api/sausage-production/*` to the backend dev
+server.
+
+For mock mode, use:
+
+```text
+VITE_SAUSAGE_API_MODE=mock
+```
+
+For real API mode, use:
+
+```text
+VITE_SAUSAGE_API_MODE=real
+VITE_SAUSAGE_API_BASE_URL=/api/sausage-production
+```
+
+Verify:
+
+```bash
+npm test
+npm run build
+npm run check:architecture
+```
+
 ## Название домена
 
 Использовать только явное имя:
@@ -60,4 +110,3 @@
 
 Не использовать нейтральное `production` без префикса, чтобы не смешивать
 домен колбасного цеха с другими производственными доменами.
-

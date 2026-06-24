@@ -5,12 +5,14 @@ import { SausageProductionService } from './services/SausageProductionService';
 import { InMemoryRepositories } from './repositories/InMemoryRepositories';
 import { SausageAuthPort } from './ports/SausageAuthPort';
 import { SausageApiError, SAUSAGE_ERROR_CODES } from 'sausage-shared-types';
+import cors from 'cors';
 
 export function createApp(
   repos: InMemoryRepositories,
   authPort: SausageAuthPort
 ) {
   const app = express();
+  app.use(cors({ origin: /^http:\/\/(127\.0\.0\.1|localhost):\d+$/ }));
   app.use(express.json());
 
   const stockService = new SausageStockService(repos, authPort);

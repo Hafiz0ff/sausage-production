@@ -17,8 +17,14 @@ import {
   SausageLossDto
 } from 'sausage-shared-types';
 
+export const SAUSAGE_API_NAMESPACE = '/api/sausage-production';
+
 export class SausageApiClient {
-  constructor(private baseUrl: string = '/api/sausage-production') {}
+  constructor(private baseUrl: string = SAUSAGE_API_NAMESPACE) {
+    if (baseUrl.startsWith('/api/production')) {
+      throw new Error('Forbidden sausage-production API namespace: /api/production');
+    }
+  }
 
   private async fetch<T>(path: string, options?: RequestInit): Promise<T> {
     const response = await fetch(`${this.baseUrl}${path}`, {

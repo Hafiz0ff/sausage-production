@@ -13,16 +13,36 @@ export function createSausageProductionRouter(
       Promise.resolve(fn(req, res, next)).catch(next);
     };
 
-  // Dashboard stub
   router.get('/dashboard', asyncHandler(async (req, res) => {
+    const rawMaterials = await stockService.getRawMaterials();
+    const finishedProducts = await stockService.getFinishedProducts();
+    const orders = await productionService.getOrders();
+    const losses = await stockService.getLosses();
+    const totalRawWarehouse = rawMaterials.reduce((sum, item) => sum + item.warehouseQty, 0);
+    const totalRawWorkshop = rawMaterials.reduce((sum, item) => sum + item.workshopQty, 0);
+    const totalFinished = finishedProducts.reduce((sum, item) => sum + item.stockQty, 0);
+    const totalLosses = losses.reduce((sum, item) => sum + item.quantityQty, 0);
+
     res.json({
-      metrics: [],
-      activeOrders: [],
-      criticalRawStock: [],
-      hourlyOutput: [],
-      recentEvents: [],
-      finishedProducts: [],
-      losses: []
+      metrics: [
+        { id: 'raw-warehouse', label: 'Сырье на складе', value: String(totalRawWarehouse), unit: 'кг', tone: 'accent' },
+        { id: 'raw-workshop', label: 'Сырье в цехе', value: String(totalRawWorkshop), unit: 'кг', tone: 'warning' },
+        { id: 'finished', label: 'Готовая продукция', value: String(totalFinished), unit: 'кг', tone: 'success' },
+        { id: 'losses', label: 'Потери', value: String(totalLosses), unit: 'кг', tone: 'danger' }
+      ],
+      activeOrders: orders.filter(order => order.status === 'IN_PROGRESS' || order.status === 'WAITING_MATERIALS' || order.status === 'PLANNED'),
+      criticalRawStock: rawMaterials.filter(item => item.status === 'LOW' || item.status === 'CRITICAL'),
+      hourlyOutput: [
+        { hour: '08', valueQty: 120 },
+        { hour: '09', valueQty: 180 },
+        { hour: '10', valueQty: 240 },
+        { hour: '11', valueQty: 210 }
+      ],
+      recentEvents: [
+        { id: 'event-1', text: 'Demo API: данные загружены из backend-domain', meta: new Date().toISOString(), tone: 'info' }
+      ],
+      finishedProducts,
+      losses
     });
   }));
 
@@ -48,7 +68,7 @@ export function createSausageProductionRouter(
 
   // Finished Products
   router.get('/finished-products', asyncHandler(async (req, res) => {
-    res.json([]);
+    res.json(await stockService.getFinishedProducts());
   }));
   
   router.post('/finished-products', asyncHandler(async (req, res) => {
@@ -57,7 +77,7 @@ export function createSausageProductionRouter(
 
   // Recipes
   router.get('/recipes', asyncHandler(async (req, res) => {
-    res.json([]);
+    res.json(await productionService.getRecipes());
   }));
 
   router.post('/recipes', asyncHandler(async (req, res) => {
@@ -70,7 +90,7 @@ export function createSausageProductionRouter(
 
   // Clients
   router.get('/clients', asyncHandler(async (req, res) => {
-    res.json([]);
+    res.json(await productionService.getClients());
   }));
 
   router.post('/clients', asyncHandler(async (req, res) => {
@@ -103,7 +123,7 @@ export function createSausageProductionRouter(
 
   // Batches
   router.get('/batches', asyncHandler(async (req, res) => {
-    res.json([]);
+    res.json(await productionService.getBatches());
   }));
 
   router.post('/batches/release', asyncHandler(async (req, res) => {
@@ -113,7 +133,7 @@ export function createSausageProductionRouter(
 
   // Stock Movements
   router.get('/stock-movements', asyncHandler(async (req, res) => {
-    res.json([]);
+    res.json(await stockService.getStockMovements());
   }));
 
   router.post('/stock/write-off', asyncHandler(async (req, res) => {
@@ -127,12 +147,18 @@ export function createSausageProductionRouter(
 
   // Losses
   router.get('/losses', asyncHandler(async (req, res) => {
-    res.json([]);
+    res.json(await stockService.getLosses());
   }));
 
   // Analytics
   router.get('/analytics/summary', asyncHandler(async (req, res) => {
-    res.json({});
+    const batches = await productionService.getBatches();
+    const losses = await stockService.getLosses();
+    res.json({
+      totalProducedQty: batches.reduce((sum, batch) => sum + batch.producedQty, 0),
+      totalAcceptedQty: batches.reduce((sum, batch) => sum + batch.acceptedQty, 0),
+      totalLossQty: losses.reduce((sum, loss) => sum + loss.quantityQty, 0)
+    });
   }));
 
   return router;

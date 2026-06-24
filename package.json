@@ -7,8 +7,12 @@
     "packages/*"
   ],
   "scripts": {
-    "build": "npm run build -w sausage-shared-types && npm run build -w sausage-api-client && npm run build -w sausage-backend-domain",
-    "test": "npm run test --workspaces --if-present"
+    "build:packages": "npm run build -w sausage-shared-types && npm run build -w sausage-api-client && npm run build -w sausage-backend-domain",
+    "build": "npm run build:packages && npm run build -w sausage-workshop",
+    "test": "npm run build:packages && npm run test --workspaces --if-present && npm run check:architecture",
+    "check:architecture": "bash scripts/check-architecture.sh",
+    "dev:api": "npm run dev -w sausage-backend-domain",
+    "dev:ui": "npm run dev -w sausage-workshop -- --port 5174"
   },
   "devDependencies": {
     "typescript": "^5.4.5",
