@@ -8,33 +8,33 @@ import {
   SausageStockMovementDto
 } from 'sausage-shared-types';
 import { v4 as uuidv4 } from 'uuid';
-import { InMemoryRepositories } from '../repositories/InMemoryRepositories';
+import { SausageRepositories } from '../repositories/SausageRepositories';
 import { SausageAuthPort } from '../ports/SausageAuthPort';
 
 export class SausageProductionService {
   constructor(
-    private repos: InMemoryRepositories,
+    private repos: SausageRepositories,
     private authPort: SausageAuthPort
   ) {}
 
   async getOrders(): Promise<SausageProductionOrderDto[]> {
     const user = this.authPort.getCurrentUser();
-    return this.repos.orders.filter(o => o.companyId === user.companyId);
+    return this.repos.orders.findMany(user.companyId);
   }
 
   async getRecipes() {
     const user = this.authPort.getCurrentUser();
-    return this.repos.recipes.filter(recipe => recipe.companyId === user.companyId);
+    return this.repos.recipes.findMany(user.companyId);
   }
 
   async getClients() {
     const user = this.authPort.getCurrentUser();
-    return this.repos.clients.filter(client => client.companyId === user.companyId);
+    return this.repos.clients.findMany(user.companyId);
   }
 
   async getBatches(): Promise<SausageProductionBatchDto[]> {
     const user = this.authPort.getCurrentUser();
-    return this.repos.batches.filter(batch => batch.companyId === user.companyId);
+    return this.repos.batches.findMany(user.companyId);
   }
 
   async createOrder(input: CreateSausageProductionOrderInput): Promise<SausageProductionOrderDto> {
@@ -43,7 +43,7 @@ export class SausageProductionService {
     }
 
     const user = this.authPort.getCurrentUser();
-    const product = this.repos.finishedProducts.find(p => p.id === input.finishedProductId && p.companyId === user.companyId);
+    const product = await this.repos.finishedProducts.findById(input.finishedProductId, user.companyId);
     if (!product) {
       throw { error: { code: SAUSAGE_ERROR_CODES.NOT_FOUND, message: 'Finished product not found' } };
     }
@@ -66,8 +66,7 @@ export class SausageProductionService {
       updatedAt: new Date().toISOString()
     };
 
-    this.repos.orders.push(order);
-    return order;
+    return await this.repos.orders.create(order);
   }
 
   async startOrder(id: string, input: StartSausageProductionOrderInput): Promise<void> {
@@ -76,7 +75,7 @@ export class SausageProductionService {
     }
 
     const user = this.authPort.getCurrentUser();
-    const order = this.repos.orders.find(o => o.id === id && o.companyId === user.companyId);
+    const order = await this.repos.orders.findById(id, user.companyId);
     if (!order) {
       throw { error: { code: SAUSAGE_ERROR_CODES.NOT_FOUND, message: 'Order not found' } };
     }
@@ -85,8 +84,10 @@ export class SausageProductionService {
       throw { error: { code: SAUSAGE_ERROR_CODES.FORBIDDEN_TRANSITION, message: 'Cannot start order from current status' } };
     }
 
-    order.status = 'IN_PROGRESS';
-    order.updatedAt = new Date().toISOString();
+    await this.repos.orders.update(id, user.companyId, {
+      status: 'IN_PROGRESS',
+      updatedAt: new Date().toISOString()
+    });
   }
 
   async releaseBatch(input: ReleaseSausageProductionBatchInput): Promise<SausageProductionBatchDto> {
@@ -98,141 +99,150 @@ export class SausageProductionService {
     }
 
     const user = this.authPort.getCurrentUser();
-    const order = this.repos.orders.find(o => o.id === input.productionOrderId && o.companyId === user.companyId);
-    if (!order) throw { error: { code: SAUSAGE_ERROR_CODES.NOT_FOUND, message: 'Order not found' } };
     
-    if (order.status !== 'IN_PROGRESS' && order.status !== 'RELEASED') {
-      throw { error: { code: SAUSAGE_ERROR_CODES.FORBIDDEN_TRANSITION, message: 'Cannot release batch for non in-progress order' } };
-    }
-
-    const recipe = this.repos.recipes.find(r => r.finishedProductId === order.finishedProductId && r.companyId === user.companyId);
-    if (!recipe) throw { error: { code: SAUSAGE_ERROR_CODES.NOT_FOUND, message: 'Recipe not found' } };
-
-    const now = new Date().toISOString();
-    const batchId = uuidv4();
-
-    // Decrease raw materials from workshop based on recipe
-    for (const item of recipe.items) {
-      const rawMaterial = this.repos.rawMaterials.find(m => m.id === item.rawMaterialId && m.companyId === user.companyId);
-      if (!rawMaterial) throw { error: { code: SAUSAGE_ERROR_CODES.NOT_FOUND, message: `Raw material ${item.rawMaterialName} not found` } };
+    return await this.repos.runTransaction(async (tx) => {
+      const order = await tx.orders.findById(input.productionOrderId, user.companyId);
+      if (!order) throw { error: { code: SAUSAGE_ERROR_CODES.NOT_FOUND, message: 'Order not found' } };
       
-      const requiredRawQty = (item.quantityQty * input.producedQty) / recipe.outputQty;
-      
-      if (rawMaterial.workshopQty < requiredRawQty) {
-         throw { error: { code: SAUSAGE_ERROR_CODES.NEGATIVE_STOCK_FORBIDDEN, message: `Insufficient workshop stock for ${rawMaterial.name}` } };
+      if (order.status !== 'IN_PROGRESS' && order.status !== 'RELEASED') {
+        throw { error: { code: SAUSAGE_ERROR_CODES.FORBIDDEN_TRANSITION, message: 'Cannot release batch for non in-progress order' } };
       }
-      rawMaterial.workshopQty -= requiredRawQty;
 
-      // Add RAW_CONSUMPTION movement
-      this.repos.movements.push({
-        id: uuidv4(),
+      const recipe = await tx.recipes.findByFinishedProductId(order.finishedProductId, user.companyId);
+      if (!recipe) throw { error: { code: SAUSAGE_ERROR_CODES.NOT_FOUND, message: 'Recipe not found' } };
+
+      const now = new Date().toISOString();
+      const batchId = uuidv4();
+
+      // Decrease raw materials from workshop based on recipe
+      for (const item of recipe.items) {
+        const rawMaterial = await tx.rawMaterials.findById(item.rawMaterialId, user.companyId);
+        if (!rawMaterial) throw { error: { code: SAUSAGE_ERROR_CODES.NOT_FOUND, message: `Raw material ${item.rawMaterialName} not found` } };
+        
+        const requiredRawQty = (item.quantityQty * input.producedQty) / recipe.outputQty;
+        
+        if (rawMaterial.workshopQty < requiredRawQty) {
+           throw { error: { code: SAUSAGE_ERROR_CODES.NEGATIVE_STOCK_FORBIDDEN, message: `Insufficient workshop stock for ${rawMaterial.name}` } };
+        }
+        await tx.rawMaterials.update(rawMaterial.id, user.companyId, {
+          workshopQty: rawMaterial.workshopQty - requiredRawQty
+        });
+
+        // Add RAW_CONSUMPTION movement
+        await tx.movements.create({
+          id: uuidv4(),
+          companyId: user.companyId,
+          docNo: `CON-${Date.now()}`,
+          type: 'RAW_CONSUMPTION',
+          itemKind: 'RAW_MATERIAL',
+          itemId: rawMaterial.id,
+          itemName: rawMaterial.name,
+          quantityQty: requiredRawQty,
+          fromLocation: 'WORKSHOP',
+          toLocation: 'LOSS', // consumed logically goes away
+          productionOrderId: order.id,
+          productionBatchId: batchId,
+          createdByUserId: user.id,
+          createdByName: user.name,
+          createdAt: now
+        });
+      }
+
+      // Increase Finished Goods
+      const product = await tx.finishedProducts.findById(order.finishedProductId, user.companyId);
+      if (product && input.acceptedQty > 0) {
+        await tx.finishedProducts.update(product.id, user.companyId, {
+          stockQty: product.stockQty + input.acceptedQty
+        });
+        
+        await tx.movements.create({
+          id: uuidv4(),
+          companyId: user.companyId,
+          docNo: `FR-${Date.now()}`,
+          type: 'FINISHED_RELEASE',
+          itemKind: 'FINISHED_PRODUCT',
+          itemId: product.id,
+          itemName: product.name,
+          quantityQty: input.acceptedQty,
+          fromLocation: 'WORKSHOP', 
+          toLocation: 'FINISHED_WAREHOUSE',
+          productionOrderId: order.id,
+          productionBatchId: batchId,
+          createdByUserId: user.id,
+          createdByName: user.name,
+          createdAt: now
+        });
+      }
+
+      // Rejected Qty -> Loss
+      if (input.rejectedQty > 0 && input.lossReason) {
+        const docNo = `WJ-${Date.now()}`;
+        await tx.movements.create({
+          id: uuidv4(),
+          companyId: user.companyId,
+          docNo,
+          type: 'LOSS_WRITE_OFF',
+          itemKind: 'FINISHED_PRODUCT',
+          itemId: order.finishedProductId,
+          itemName: order.finishedProductName,
+          quantityQty: input.rejectedQty,
+          fromLocation: 'WORKSHOP', 
+          toLocation: 'LOSS',
+          productionOrderId: order.id,
+          productionBatchId: batchId,
+          createdByUserId: user.id,
+          createdByName: user.name,
+          createdAt: now
+        });
+        
+        await tx.losses.create({
+          id: uuidv4(),
+          companyId: user.companyId,
+          docNo,
+          itemKind: 'FINISHED_PRODUCT',
+          itemId: order.finishedProductId,
+          itemName: order.finishedProductName,
+          reason: input.lossReason,
+          quantityQty: input.rejectedQty,
+          productionOrderId: order.id,
+          productionBatchId: batchId,
+          createdByUserId: user.id,
+          createdByName: user.name,
+          createdAt: now
+        });
+      }
+
+      let yieldPercent = 0;
+      const consumedRawQty = recipe.items.reduce((acc, item) => acc + (item.quantityQty * input.producedQty) / recipe.outputQty, 0);
+      if (consumedRawQty > 0) {
+        yieldPercent = (input.acceptedQty / consumedRawQty) * 100;
+      }
+
+      const batch: SausageProductionBatchDto = {
+        id: batchId,
         companyId: user.companyId,
-        docNo: `CON-${Date.now()}`,
-        type: 'RAW_CONSUMPTION',
-        itemKind: 'RAW_MATERIAL',
-        itemId: rawMaterial.id,
-        itemName: rawMaterial.name,
-        quantityQty: requiredRawQty,
-        fromLocation: 'WORKSHOP',
-        toLocation: 'LOSS', // consumed logically goes away
+        batchNo: `BAT-${Date.now()}`,
         productionOrderId: order.id,
-        productionBatchId: batchId,
-        createdByUserId: user.id,
-        createdByName: user.name,
-        createdAt: now
-      });
-    }
-
-    // Increase Finished Goods
-    const product = this.repos.finishedProducts.find(p => p.id === order.finishedProductId && p.companyId === user.companyId);
-    if (product && input.acceptedQty > 0) {
-      product.stockQty += input.acceptedQty;
+        productionOrderNumber: order.number,
+        finishedProductId: order.finishedProductId,
+        finishedProductName: order.finishedProductName,
+        producedQty: input.producedQty,
+        acceptedQty: input.acceptedQty,
+        rejectedQty: input.rejectedQty,
+        yieldPercent,
+        releasedAt: now,
+        createdAt: now,
+        updatedAt: now
+      };
       
-      this.repos.movements.push({
-        id: uuidv4(),
-        companyId: user.companyId,
-        docNo: `FR-${Date.now()}`,
-        type: 'FINISHED_RELEASE',
-        itemKind: 'FINISHED_PRODUCT',
-        itemId: product.id,
-        itemName: product.name,
-        quantityQty: input.acceptedQty,
-        fromLocation: 'WORKSHOP', 
-        toLocation: 'FINISHED_WAREHOUSE',
-        productionOrderId: order.id,
-        productionBatchId: batchId,
-        createdByUserId: user.id,
-        createdByName: user.name,
-        createdAt: now
+      const createdBatch = await tx.batches.create(batch);
+
+      await tx.orders.update(order.id, user.companyId, {
+        status: input.acceptedQty >= order.quantityQty ? 'ACCEPTED' : 'RELEASED',
+        updatedAt: now
       });
-    }
 
-    // Rejected Qty -> Loss
-    if (input.rejectedQty > 0 && input.lossReason) {
-      const docNo = `WJ-${Date.now()}`;
-      this.repos.movements.push({
-        id: uuidv4(),
-        companyId: user.companyId,
-        docNo,
-        type: 'LOSS_WRITE_OFF',
-        itemKind: 'FINISHED_PRODUCT',
-        itemId: order.finishedProductId,
-        itemName: order.finishedProductName,
-        quantityQty: input.rejectedQty,
-        fromLocation: 'WORKSHOP', 
-        toLocation: 'LOSS',
-        productionOrderId: order.id,
-        productionBatchId: batchId,
-        createdByUserId: user.id,
-        createdByName: user.name,
-        createdAt: now
-      });
-      
-      this.repos.losses.push({
-        id: uuidv4(),
-        companyId: user.companyId,
-        docNo,
-        itemKind: 'FINISHED_PRODUCT',
-        itemId: order.finishedProductId,
-        itemName: order.finishedProductName,
-        reason: input.lossReason,
-        quantityQty: input.rejectedQty,
-        productionOrderId: order.id,
-        productionBatchId: batchId,
-        createdByUserId: user.id,
-        createdByName: user.name,
-        createdAt: now
-      });
-    }
-
-    let yieldPercent = 0;
-    const consumedRawQty = recipe.items.reduce((acc, item) => acc + (item.quantityQty * input.producedQty) / recipe.outputQty, 0);
-    if (consumedRawQty > 0) {
-      yieldPercent = (input.acceptedQty / consumedRawQty) * 100;
-    }
-
-    const batch: SausageProductionBatchDto = {
-      id: batchId,
-      companyId: user.companyId,
-      batchNo: `BAT-${Date.now()}`,
-      productionOrderId: order.id,
-      productionOrderNumber: order.number,
-      finishedProductId: order.finishedProductId,
-      finishedProductName: order.finishedProductName,
-      producedQty: input.producedQty,
-      acceptedQty: input.acceptedQty,
-      rejectedQty: input.rejectedQty,
-      yieldPercent,
-      releasedAt: now,
-      createdAt: now,
-      updatedAt: now
-    };
-    
-    this.repos.batches.push(batch);
-
-    order.status = input.acceptedQty >= order.quantityQty ? 'ACCEPTED' : 'RELEASED';
-    order.updatedAt = now;
-
-    return batch;
+      return createdBatch;
+    });
   }
 }

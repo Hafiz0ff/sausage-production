@@ -9,7 +9,7 @@ describe('Sausage Production Domain Rules', () => {
   let stockService: SausageStockService;
   let productionService: SausageProductionService;
 
-  beforeEach(() => {
+  beforeEach(async () => {
     repos = new InMemoryRepositories();
     const authPort = {
       getCurrentUser: () => ({ id: 'u1', companyId: 'c1', role: 'admin', name: 'Admin' }),
@@ -20,7 +20,7 @@ describe('Sausage Production Domain Rules', () => {
     productionService = new SausageProductionService(repos, authPort);
 
     // Initial seed
-    repos.rawMaterials.push({
+    await repos.rawMaterials.create({
       id: 'raw-1',
       companyId: 'c1',
       name: 'Beef',
@@ -35,7 +35,7 @@ describe('Sausage Production Domain Rules', () => {
       updatedAt: new Date().toISOString()
     });
 
-    repos.finishedProducts.push({
+    await repos.finishedProducts.create({
       id: 'prod-1',
       companyId: 'c1',
       name: 'Beef Sausage',
@@ -48,7 +48,7 @@ describe('Sausage Production Domain Rules', () => {
       updatedAt: new Date().toISOString()
     });
 
-    repos.recipes.push({
+    await repos.recipes.create({
       id: 'rec-1',
       companyId: 'c1',
       finishedProductId: 'prod-1',
@@ -74,11 +74,12 @@ describe('Sausage Production Domain Rules', () => {
 
   it('transfers raw material: warehouse decreases, workshop increases', async () => {
     await stockService.transferToWorkshop('raw-1', { rawMaterialId: 'raw-1', quantityQty: 50 });
-    const raw = repos.rawMaterials[0];
-    expect(raw.warehouseQty).toBe(150);
-    expect(raw.workshopQty).toBe(50);
+    const raw = await repos.rawMaterials.findById('raw-1', 'c1');
+    expect(raw?.warehouseQty).toBe(150);
+    expect(raw?.workshopQty).toBe(50);
 
-    const movement = repos.movements.find(m => m.type === 'RAW_TRANSFER_TO_WORKSHOP');
+    const movements = await repos.movements.findMany('c1');
+    const movement = movements.find(m => m.type === 'RAW_TRANSFER_TO_WORKSHOP');
     expect(movement).toBeDefined();
     expect(movement?.quantityQty).toBe(50);
   });
@@ -116,18 +117,19 @@ describe('Sausage Production Domain Rules', () => {
     expect(batch.acceptedQty).toBe(95);
 
     // Workshop raw should decrease by 110 (from recipe)
-    const raw = repos.rawMaterials[0];
-    expect(raw.workshopQty).toBe(0); // 110 - 110 = 0
+    const raw = await repos.rawMaterials.findById('raw-1', 'c1');
+    expect(raw?.workshopQty).toBe(0); // 110 - 110 = 0
 
     // Finished product should increase by 95
-    const prod = repos.finishedProducts[0];
-    expect(prod.stockQty).toBe(95);
+    const prod = await repos.finishedProducts.findById('prod-1', 'c1');
+    expect(prod?.stockQty).toBe(95);
 
     // Check movements
-    const consumedMovement = repos.movements.find(m => m.type === 'RAW_CONSUMPTION');
+    const movements = await repos.movements.findMany('c1');
+    const consumedMovement = movements.find(m => m.type === 'RAW_CONSUMPTION');
     expect(consumedMovement?.quantityQty).toBe(110);
 
-    const releaseMovement = repos.movements.find(m => m.type === 'FINISHED_RELEASE');
+    const releaseMovement = movements.find(m => m.type === 'FINISHED_RELEASE');
     expect(releaseMovement?.quantityQty).toBe(95);
     expect(releaseMovement?.productionBatchId).toBe(batch.id);
   });
@@ -141,13 +143,15 @@ describe('Sausage Production Domain Rules', () => {
       reason: 'DEFECT'
     });
 
-    const raw = repos.rawMaterials[0];
-    expect(raw.warehouseQty).toBe(190);
+    const raw = await repos.rawMaterials.findById('raw-1', 'c1');
+    expect(raw?.warehouseQty).toBe(190);
 
-    const movement = repos.movements.find(m => m.type === 'LOSS_WRITE_OFF');
+    const movements = await repos.movements.findMany('c1');
+    const movement = movements.find(m => m.type === 'LOSS_WRITE_OFF');
     expect(movement).toBeDefined();
 
-    const loss = repos.losses[0];
+    const losses = await repos.losses.findMany('c1');
+    const loss = losses[0];
     expect(loss).toBeDefined();
     expect(loss.reason).toBe('DEFECT');
     expect(loss.quantityQty).toBe(10);
@@ -168,7 +172,8 @@ describe('Sausage Production Domain Rules', () => {
       lossReason: 'DEFECT'
     });
 
-    const loss = repos.losses[0];
+    const losses = await repos.losses.findMany('c1');
+    const loss = losses[0];
     expect(loss).toBeDefined();
     expect(loss.quantityQty).toBe(10);
     expect(loss.reason).toBe('DEFECT');
@@ -188,11 +193,12 @@ describe('Sausage Production Domain Rules', () => {
       rejectedQty: 0
     });
 
-    expect(order.status).toBe('ACCEPTED');
+    const updatedOrder = await repos.orders.findById(order.id, 'c1');
+    expect(updatedOrder?.status).toBe('ACCEPTED');
   });
 
   it('isolates write operations by tenant', async () => {
-    repos.rawMaterials.push({
+    await repos.rawMaterials.create({
       id: 'raw-c2',
       companyId: 'c2',
       name: 'Other Tenant Beef',
@@ -214,7 +220,8 @@ describe('Sausage Production Domain Rules', () => {
       error: { code: SAUSAGE_ERROR_CODES.NOT_FOUND }
     });
 
-    expect(repos.rawMaterials.find(item => item.id === 'raw-c2')?.warehouseQty).toBe(200);
-    expect(repos.rawMaterials.find(item => item.id === 'raw-c2')?.workshopQty).toBe(0);
+    const rawC2 = await repos.rawMaterials.findById('raw-c2', 'c2');
+    expect(rawC2?.warehouseQty).toBe(200);
+    expect(rawC2?.workshopQty).toBe(0);
   });
 });

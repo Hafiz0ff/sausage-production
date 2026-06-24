@@ -1,0 +1,180 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model SausageRawMaterial {
+  id           String   @id @default(uuid())
+  companyId    String   @map("company_id")
+  name         String
+  group        String
+  unit         String
+  warehouseQty Float    @map("warehouse_qty")
+  workshopQty  Float    @map("workshop_qty")
+  reservedQty  Float    @map("reserved_qty")
+  minQty       Float    @map("min_qty")
+  status       String
+  supplierName String?  @map("supplier_name")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  recipeItems SausageRecipeItem[]
+
+  @@index([companyId])
+  @@map("sausage_raw_materials")
+}
+
+model SausageFinishedProduct {
+  id            String   @id @default(uuid())
+  companyId     String   @map("company_id")
+  name          String
+  sku           String
+  unit          String
+  stockQty      Float    @map("stock_qty")
+  stockPcs      Float?   @map("stock_pcs")
+  reservedQty   Float    @map("reserved_qty")
+  shelfLifeDays Float?   @map("shelf_life_days")
+  status        String
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  recipes SausageRecipe[]
+
+  @@index([companyId])
+  @@map("sausage_finished_products")
+}
+
+model SausageRecipe {
+  id                   String   @id @default(uuid())
+  companyId            String   @map("company_id")
+  finishedProductId    String   @map("finished_product_id")
+  finishedProductName  String   @map("finished_product_name")
+  outputQty            Float    @map("output_qty")
+  expectedYieldPercent Float    @map("expected_yield_percent")
+  createdAt            DateTime @default(now()) @map("created_at")
+  updatedAt            DateTime @updatedAt @map("updated_at")
+
+  finishedProduct SausageFinishedProduct @relation(fields: [finishedProductId], references: [id])
+  items           SausageRecipeItem[]
+
+  @@index([companyId])
+  @@map("sausage_recipes")
+}
+
+model SausageRecipeItem {
+  id              String   @id @default(uuid())
+  recipeId        String   @map("recipe_id")
+  rawMaterialId   String   @map("raw_material_id")
+  rawMaterialName String   @map("raw_material_name")
+  quantityQty     Float    @map("quantity_qty")
+
+  recipe      SausageRecipe      @relation(fields: [recipeId], references: [id])
+  rawMaterial SausageRawMaterial @relation(fields: [rawMaterialId], references: [id])
+
+  @@map("sausage_recipe_items")
+}
+
+model SausageClient {
+  id               String   @id @default(uuid())
+  companyId        String   @map("company_id")
+  name             String
+  segment          String
+  phone            String?
+  externalClientId String?  @map("external_client_id")
+  balanceAmount    Float?   @map("balance_amount")
+  balanceCurrency  String?  @map("balance_currency")
+  lastOrderAt      String?  @map("last_order_at")
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
+
+  @@index([companyId])
+  @@map("sausage_clients")
+}
+
+model SausageProductionOrder {
+  id                  String   @id @default(uuid())
+  companyId           String   @map("company_id")
+  number              String
+  finishedProductId   String   @map("finished_product_id")
+  finishedProductName String   @map("finished_product_name")
+  quantityQty         Float    @map("quantity_qty")
+  clientId            String?  @map("client_id")
+  clientName          String?  @map("client_name")
+  status              String
+  progressPercent     Float    @map("progress_percent")
+  dueAt               String?  @map("due_at")
+  shift               String?
+  externalOrderId     String?  @map("external_order_id")
+  createdAt           DateTime @default(now()) @map("created_at")
+  updatedAt           DateTime @updatedAt @map("updated_at")
+
+  @@index([companyId])
+  @@map("sausage_production_orders")
+}
+
+model SausageProductionBatch {
+  id                    String   @id @default(uuid())
+  companyId             String   @map("company_id")
+  batchNo               String   @map("batch_no")
+  productionOrderId     String   @map("production_order_id")
+  productionOrderNumber String   @map("production_order_number")
+  finishedProductId     String   @map("finished_product_id")
+  finishedProductName   String   @map("finished_product_name")
+  producedQty           Float    @map("produced_qty")
+  acceptedQty           Float    @map("accepted_qty")
+  rejectedQty           Float    @map("rejected_qty")
+  yieldPercent          Float    @map("yield_percent")
+  releasedAt            String   @map("released_at")
+  createdAt             DateTime @default(now()) @map("created_at")
+  updatedAt             DateTime @updatedAt @map("updated_at")
+
+  @@index([companyId])
+  @@map("sausage_production_batches")
+}
+
+model SausageStockMovement {
+  id                String   @id @default(uuid())
+  companyId         String   @map("company_id")
+  docNo             String   @map("doc_no")
+  type              String
+  itemKind          String   @map("item_kind")
+  itemId            String   @map("item_id")
+  itemName          String   @map("item_name")
+  quantityQty       Float    @map("quantity_qty")
+  fromLocation      String   @map("from_location")
+  toLocation        String   @map("to_location")
+  productionOrderId String?  @map("production_order_id")
+  productionBatchId String?  @map("production_batch_id")
+  createdByUserId   String   @map("created_by_user_id")
+  createdByName     String?  @map("created_by_name")
+  createdAt         DateTime @default(now()) @map("created_at")
+  reason            String?
+
+  @@index([companyId])
+  @@map("sausage_stock_movements")
+}
+
+model SausageLoss {
+  id                String   @id @default(uuid())
+  companyId         String   @map("company_id")
+  docNo             String   @map("doc_no")
+  itemKind          String   @map("item_kind")
+  itemId            String   @map("item_id")
+  itemName          String   @map("item_name")
+  reason            String
+  quantityQty       Float    @map("quantity_qty")
+  costAmount        Float?   @map("cost_amount")
+  costCurrency      String?  @map("cost_currency")
+  productionOrderId String?  @map("production_order_id")
+  productionBatchId String?  @map("production_batch_id")
+  createdByUserId   String   @map("created_by_user_id")
+  createdByName     String?  @map("created_by_name")
+  createdAt         DateTime @default(now()) @map("created_at")
+
+  @@index([companyId])
+  @@map("sausage_losses")
+}

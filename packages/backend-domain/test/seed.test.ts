@@ -8,7 +8,7 @@ describe('Dev Server Seed Data & Endpoints', () => {
   it('serves seed data through endpoints', async () => {
     const repos = new InMemoryRepositories();
     const companyId = DEMO_COMPANY_ID;
-    seedDemoSausageData(repos, companyId);
+    await seedDemoSausageData(repos, companyId);
 
     const app = createApp(repos, {
       getCurrentUser: () => ({ id: 'dev', companyId, role: 'admin', name: 'Dev Admin' }),
@@ -58,5 +58,22 @@ describe('Dev Server Seed Data & Endpoints', () => {
     const rawMaterialsAfter = await request(app).get('/api/sausage-production/raw-materials');
     const updatedRaw = rawMaterialsAfter.body.find((r: any) => r.id === 'raw-1');
     expect(updatedRaw.workshopQty).toBe(350); // 300 + 50
+  });
+
+  it('can seed demo data repeatedly without duplicating journal rows', async () => {
+    const repos = new InMemoryRepositories();
+    const companyId = DEMO_COMPANY_ID;
+
+    await seedDemoSausageData(repos, companyId);
+    await seedDemoSausageData(repos, companyId);
+
+    expect(await repos.rawMaterials.findMany(companyId)).toHaveLength(2);
+    expect(await repos.finishedProducts.findMany(companyId)).toHaveLength(1);
+    expect(await repos.clients.findMany(companyId)).toHaveLength(1);
+    expect(await repos.recipes.findMany(companyId)).toHaveLength(1);
+    expect(await repos.orders.findMany(companyId)).toHaveLength(1);
+    expect(await repos.batches.findMany(companyId)).toHaveLength(1);
+    expect(await repos.movements.findMany(companyId)).toHaveLength(1);
+    expect(await repos.losses.findMany(companyId)).toHaveLength(1);
   });
 });

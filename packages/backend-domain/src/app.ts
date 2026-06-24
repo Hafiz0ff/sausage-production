@@ -2,13 +2,13 @@ import express from 'express';
 import { createSausageProductionRouter } from './routes/sausageProductionRouter';
 import { SausageStockService } from './services/SausageStockService';
 import { SausageProductionService } from './services/SausageProductionService';
-import { InMemoryRepositories } from './repositories/InMemoryRepositories';
+import { SausageRepositories } from './repositories/SausageRepositories';
 import { SausageAuthPort } from './ports/SausageAuthPort';
 import { SausageApiError, SAUSAGE_ERROR_CODES } from 'sausage-shared-types';
 import cors from 'cors';
 
 export function createApp(
-  repos: InMemoryRepositories,
+  repos: SausageRepositories,
   authPort: SausageAuthPort
 ) {
   const app = express();

@@ -31,5 +31,23 @@ if [ ! -z "$found_mock" ]; then
   exit 1
 fi
 
+# Ensure no Prisma models without Sausage prefix
+if [ -f "packages/backend-domain/prisma/schema.prisma" ]; then
+  bad_models=$(grep -E "^model [A-Za-z0-9_]+ \{" packages/backend-domain/prisma/schema.prisma | grep -v "^model Sausage" || true)
+  if [ ! -z "$bad_models" ]; then
+    echo "Architecture Violation: Found Prisma models without 'Sausage' prefix:"
+    echo "$bad_models"
+    exit 1
+  fi
+
+  # Ensure no tables without sausage_ prefix
+  bad_tables=$(grep -E "@@map\(\"[A-Za-z0-9_]+\"\)" packages/backend-domain/prisma/schema.prisma | grep -v "@@map(\"sausage_" || true)
+  if [ ! -z "$bad_tables" ]; then
+    echo "Architecture Violation: Found SQL tables without 'sausage_' prefix:"
+    echo "$bad_tables"
+    exit 1
+  fi
+fi
+
 echo "Architecture Check Passed!"
 exit 0
