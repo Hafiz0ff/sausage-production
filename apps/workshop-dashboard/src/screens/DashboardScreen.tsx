@@ -20,6 +20,8 @@ const quickActionIcons: Record<ModalKind, typeof Truck> = {
   finishedProduct: Plus,
   recipe: Plus,
   client: Plus,
+  salesOrder: Plus,
+  createDemandOrder: Plus,
 };
 
 export function DashboardScreen({ dashboard, onOpenModal }: DashboardScreenProps) {

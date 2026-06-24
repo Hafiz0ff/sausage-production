@@ -213,3 +213,89 @@ export interface SausageDashboardDto {
   finishedProducts: SausageFinishedProductDto[];
   losses: SausageLossDto[];
 }
+
+export interface SausageSalesOrderDto {
+  id: string;
+  companyId: string;
+  number: string;
+  clientId?: string;
+  clientName?: string;
+  externalOrderId?: string;
+  status: import('./domain-enums').SausageSalesOrderStatus;
+  requestedDate?: string;
+  dueDate?: string;
+  note?: string;
+  createdAt: string;
+  updatedAt: string;
+  items: SausageSalesOrderItemDto[];
+}
+
+export interface SausageSalesOrderItemDto {
+  id: string;
+  companyId: string;
+  salesOrderId: string;
+  finishedProductId: string;
+  finishedProductName: string;
+  quantityQty: number;
+  reservedQty: number;
+  producedQty: number;
+  shippedQty: number;
+  shortageQty: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface SausageFinishedGoodsReservationDto {
+  id: string;
+  companyId: string;
+  salesOrderId: string;
+  salesOrderItemId: string;
+  finishedProductId: string;
+  finishedProductName: string;
+  quantityQty: number;
+  status: import('./domain-enums').SausageReservationStatus;
+  createdByUserId: string;
+  createdByName?: string;
+  createdAt: string;
+  releasedAt?: string;
+  completedAt?: string;
+  reason?: string;
+}
+
+export interface SausageProductionDemandDto {
+  finishedProductId: string;
+  finishedProductName: string;
+  requiredQty: number;
+  availableQty: number;
+  reservedQty: number;
+  shortageQty: number;
+  suggestedProductionQty: number;
+  linkedProductionOrders: string[];
+}
+
+export interface CreateSausageSalesOrderInput {
+  clientId?: string;
+  clientName?: string;
+  externalOrderId?: string;
+  requestedDate?: string;
+  dueDate?: string;
+  note?: string;
+  items: Array<{
+    finishedProductId: string;
+    quantityQty: number;
+  }>;
+}
+
+export interface CreateSausageReservationInput {
+  quantityQty: number;
+  allowPartial?: boolean;
+}
+
+export interface CreateProductionOrderFromDemandInput {
+  finishedProductId: string;
+  quantityQty: number;
+  salesOrderId?: string;
+  salesOrderItemId?: string;
+  dueAt?: string;
+  note?: string;
+}

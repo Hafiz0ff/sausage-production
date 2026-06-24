@@ -1,6 +1,8 @@
 export type ScreenKey =
   | 'dashboard'
   | 'orders'
+  | 'salesOrders'
+  | 'productionDemand'
   | 'batches'
   | 'transfers'
   | 'rawMaterials'
@@ -172,7 +174,52 @@ export type ModalKind =
   | 'rawMaterial'
   | 'finishedProduct'
   | 'recipe'
-  | 'client';
+  | 'client'
+  | 'salesOrder'
+  | 'createDemandOrder';
+
+export interface SalesOrder {
+  id: string;
+  number: string;
+  clientId: string;
+  clientName: string;
+  status: string;
+  items: SalesOrderItem[];
+  createdAt: string;
+}
+
+export interface SalesOrderItem {
+  id: string;
+  finishedProductId: string;
+  finishedProductName: string;
+  quantityQty: number;
+  reservedQty: number;
+  producedQty: number;
+  shippedQty: number;
+  shortageQty: number;
+  activeReservationId?: string;
+  priceAmount: number;
+  costAmount: number;
+}
+
+export interface FinishedGoodsReservation {
+  id: string;
+  salesOrderId: string;
+  salesOrderItemId: string;
+  finishedProductName: string;
+  quantityQty: number;
+  status: string;
+}
+
+export interface ProductionDemand {
+  finishedProductId: string;
+  finishedProductName: string;
+  requiredQty: number;
+  availableQty: number;
+  reservedQty: number;
+  shortageQty: number;
+  suggestedProductionQty: number;
+}
 
 export interface WorkshopDataset {
   rawMaterials: RawMaterial[];
@@ -180,6 +227,9 @@ export interface WorkshopDataset {
   clients: Client[];
   recipes: Recipe[];
   orders: ProductionOrder[];
+  salesOrders: SalesOrder[];
+  reservations: FinishedGoodsReservation[];
+  productionDemand: ProductionDemand[];
   batches: ProductionBatch[];
   movements: StockMovement[];
   losses: LossRecord[];

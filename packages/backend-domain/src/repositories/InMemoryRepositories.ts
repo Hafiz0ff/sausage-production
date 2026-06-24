@@ -29,6 +29,16 @@ export class InMemoryRepositories implements SausageRepositories {
   private batchesData: SausageProductionBatchDto[] = [];
   private movementsData: SausageStockMovementDto[] = [];
   private lossesData: SausageLossDto[] = [];
+  private salesOrdersData: import('sausage-shared-types').SausageSalesOrderDto[] = [];
+  private salesOrderItemsData: import('sausage-shared-types').SausageSalesOrderItemDto[] = [];
+  private reservationsData: import('sausage-shared-types').SausageFinishedGoodsReservationDto[] = [];
+
+  private salesOrderWithItems(order: import('sausage-shared-types').SausageSalesOrderDto): import('sausage-shared-types').SausageSalesOrderDto {
+    return {
+      ...order,
+      items: this.salesOrderItemsData.filter(item => item.salesOrderId === order.id && item.companyId === order.companyId)
+    };
+  }
 
   readonly rawMaterials: SausageRawMaterialRepository = {
     findMany: async (companyId) => this.rawMaterialsData.filter(x => x.companyId === companyId),
@@ -99,6 +109,45 @@ export class InMemoryRepositories implements SausageRepositories {
     create: async (data) => { this.lossesData.push(data); return data; }
   };
 
+  readonly salesOrders: import('./SausageRepositories').SausageSalesOrderRepository = {
+    findMany: async (companyId) => this.salesOrdersData.filter(x => x.companyId === companyId).map(x => this.salesOrderWithItems(x)),
+    findById: async (id, companyId) => {
+      const order = this.salesOrdersData.find(x => x.id === id && x.companyId === companyId);
+      return order ? this.salesOrderWithItems(order) : null;
+    },
+    create: async (data) => { this.salesOrdersData.push(data); return data; },
+    update: async (id, companyId, data) => {
+      const idx = this.salesOrdersData.findIndex(x => x.id === id && x.companyId === companyId);
+      if (idx === -1) throw new Error('Not found');
+      this.salesOrdersData[idx] = { ...this.salesOrdersData[idx], ...data };
+      return this.salesOrdersData[idx];
+    }
+  };
+
+  readonly salesOrderItems: import('./SausageRepositories').SausageSalesOrderItemRepository = {
+    findMany: async (companyId) => this.salesOrderItemsData.filter(x => x.companyId === companyId),
+    findByOrderId: async (salesOrderId, companyId) => this.salesOrderItemsData.filter(x => x.salesOrderId === salesOrderId && x.companyId === companyId),
+    create: async (data) => { this.salesOrderItemsData.push(data); return data; },
+    update: async (id, companyId, data) => {
+      const idx = this.salesOrderItemsData.findIndex(x => x.id === id && x.companyId === companyId);
+      if (idx === -1) throw new Error('Not found');
+      this.salesOrderItemsData[idx] = { ...this.salesOrderItemsData[idx], ...data };
+      return this.salesOrderItemsData[idx];
+    }
+  };
+
+  readonly reservations: import('./SausageRepositories').SausageReservationRepository = {
+    findMany: async (companyId) => this.reservationsData.filter(x => x.companyId === companyId),
+    findById: async (id, companyId) => this.reservationsData.find(x => x.id === id && x.companyId === companyId) || null,
+    create: async (data) => { this.reservationsData.push(data); return data; },
+    update: async (id, companyId, data) => {
+      const idx = this.reservationsData.findIndex(x => x.id === id && x.companyId === companyId);
+      if (idx === -1) throw new Error('Not found');
+      this.reservationsData[idx] = { ...this.reservationsData[idx], ...data };
+      return this.reservationsData[idx];
+    }
+  };
+
   async runTransaction<T>(fn: (tx: SausageRepositories) => Promise<T>): Promise<T> {
     // In memory, we just run it directly. For real rollback we would clone states, but this is sufficient for tests.
     return fn(this);
@@ -113,5 +162,8 @@ export class InMemoryRepositories implements SausageRepositories {
     this.batchesData = [];
     this.movementsData = [];
     this.lossesData = [];
+    this.salesOrdersData = [];
+    this.salesOrderItemsData = [];
+    this.reservationsData = [];
   }
 }

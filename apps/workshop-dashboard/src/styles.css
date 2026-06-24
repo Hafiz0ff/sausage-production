@@ -255,6 +255,19 @@ button:disabled {
   border-color: #f17152;
 }
 
+.btn-small {
+  min-height: 30px;
+  padding: 6px 10px;
+  font-size: 11px;
+}
+
+.table-actions {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+}
+
 .btn-icon {
   position: relative;
   width: 36px;

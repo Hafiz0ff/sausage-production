@@ -101,6 +101,52 @@ export const mockSausageProductionData: WorkshopDataset = {
     finishedProducts: [],
     losses: [],
   },
+  salesOrders: [
+    {
+      id: 'so-1',
+      number: 'SO-260624-001',
+      clientId: 'cl-1',
+      clientName: 'Маркет Центральный',
+      status: 'PARTIALLY_RESERVED',
+      createdAt: '2026-06-24 10:15',
+      items: [
+        {
+          id: 'soi-1',
+          finishedProductId: 'fp-1',
+          finishedProductName: 'Докторская ГОСТ',
+          quantityQty: 900,
+          reservedQty: 410,
+          producedQty: 0,
+          shippedQty: 0,
+          shortageQty: 490,
+          activeReservationId: 'res-1',
+          priceAmount: 0,
+          costAmount: 0
+        }
+      ]
+    }
+  ],
+  reservations: [
+    {
+      id: 'res-1',
+      salesOrderId: 'so-1',
+      salesOrderItemId: 'soi-1',
+      finishedProductName: 'Докторская ГОСТ',
+      quantityQty: 410,
+      status: 'ACTIVE'
+    }
+  ],
+  productionDemand: [
+    {
+      finishedProductId: 'fp-1',
+      finishedProductName: 'Докторская ГОСТ',
+      requiredQty: 490,
+      availableQty: 830,
+      reservedQty: 410,
+      shortageQty: 0,
+      suggestedProductionQty: 0
+    }
+  ]
 };
 
 mockSausageProductionData.dashboard.activeOrders = mockSausageProductionData.orders;

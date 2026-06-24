@@ -178,3 +178,64 @@ model SausageLoss {
   @@index([companyId])
   @@map("sausage_losses")
 }
+
+model SausageSalesOrder {
+  id              String   @id @default(uuid())
+  companyId       String   @map("company_id")
+  number          String
+  clientId        String?  @map("client_id")
+  clientName      String?  @map("client_name")
+  externalOrderId String?  @map("external_order_id")
+  status          String
+  requestedDate   String?  @map("requested_date")
+  dueDate         String?  @map("due_date")
+  note            String?
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  items SausageSalesOrderItem[]
+
+  @@index([companyId])
+  @@map("sausage_sales_orders")
+}
+
+model SausageSalesOrderItem {
+  id                  String   @id @default(uuid())
+  companyId           String   @map("company_id")
+  salesOrderId        String   @map("sales_order_id")
+  finishedProductId   String   @map("finished_product_id")
+  finishedProductName String   @map("finished_product_name")
+  quantityQty         Float    @map("quantity_qty")
+  reservedQty         Float    @default(0) @map("reserved_qty")
+  producedQty         Float    @default(0) @map("produced_qty")
+  shippedQty          Float    @default(0) @map("shipped_qty")
+  shortageQty         Float    @default(0) @map("shortage_qty")
+  createdAt           DateTime @default(now()) @map("created_at")
+  updatedAt           DateTime @updatedAt @map("updated_at")
+
+  salesOrder SausageSalesOrder @relation(fields: [salesOrderId], references: [id])
+
+  @@index([companyId])
+  @@index([salesOrderId])
+  @@map("sausage_sales_order_items")
+}
+
+model SausageFinishedGoodsReservation {
+  id                  String    @id @default(uuid())
+  companyId           String    @map("company_id")
+  salesOrderId        String    @map("sales_order_id")
+  salesOrderItemId    String    @map("sales_order_item_id")
+  finishedProductId   String    @map("finished_product_id")
+  finishedProductName String    @map("finished_product_name")
+  quantityQty         Float     @map("quantity_qty")
+  status              String
+  createdByUserId     String    @map("created_by_user_id")
+  createdByName       String?   @map("created_by_name")
+  createdAt           DateTime  @default(now()) @map("created_at")
+  releasedAt          DateTime? @map("released_at")
+  completedAt         DateTime? @map("completed_at")
+  reason              String?
+
+  @@index([companyId])
+  @@map("sausage_finished_goods_reservations")
+}

@@ -1,10 +1,12 @@
 import { Router, Request, Response, NextFunction } from 'express';
 import { SausageStockService } from '../services/SausageStockService';
 import { SausageProductionService } from '../services/SausageProductionService';
+import { SausageSalesService } from '../services/SausageSalesService';
 
 export function createSausageProductionRouter(
   stockService: SausageStockService,
-  productionService: SausageProductionService
+  productionService: SausageProductionService,
+  salesService: SausageSalesService
 ): Router {
   const router = Router();
 
@@ -159,6 +161,69 @@ export function createSausageProductionRouter(
       totalAcceptedQty: batches.reduce((sum, batch) => sum + batch.acceptedQty, 0),
       totalLossQty: losses.reduce((sum, loss) => sum + loss.quantityQty, 0)
     });
+  }));
+
+  // Sales Orders
+  router.get('/sales-orders', asyncHandler(async (req, res) => {
+    res.json(await salesService.getSalesOrders());
+  }));
+
+  router.get('/sales-orders/:id', asyncHandler(async (req, res) => {
+    const order = await salesService.getSalesOrderById(req.params.id);
+    if (!order) {
+      res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Not found' } });
+      return;
+    }
+    res.json(order);
+  }));
+
+  router.post('/sales-orders', asyncHandler(async (req, res) => {
+    const order = await salesService.createSalesOrder(req.body);
+    res.status(201).json(order);
+  }));
+
+  router.post('/sales-orders/:id/confirm', asyncHandler(async (req, res) => {
+    const order = await salesService.confirmSalesOrder(req.params.id);
+    res.json(order);
+  }));
+
+  router.post('/sales-orders/:id/cancel', asyncHandler(async (req, res) => {
+    const order = await salesService.cancelSalesOrder(req.params.id);
+    res.json(order);
+  }));
+
+  // Reservations
+  router.post('/sales-orders/:id/reserve', asyncHandler(async (req, res) => {
+    const reservation = await salesService.reserveSalesOrderItem(
+      req.params.id,
+      req.body.salesOrderItemId,
+      req.body
+    );
+    res.status(201).json(reservation);
+  }));
+
+  router.post('/reservations/:id/release', asyncHandler(async (req, res) => {
+    const reservation = await salesService.releaseReservation(req.params.id, req.body.reason);
+    res.json(reservation);
+  }));
+
+  router.post('/reservations/:id/complete', asyncHandler(async (req, res) => {
+    const reservation = await salesService.completeReservation(req.params.id);
+    res.json(reservation);
+  }));
+
+  router.get('/reservations', asyncHandler(async (req, res) => {
+    res.json(await salesService.getReservations());
+  }));
+
+  // Production Demand
+  router.get('/production-demand', asyncHandler(async (req, res) => {
+    res.json(await salesService.getProductionDemand());
+  }));
+
+  router.post('/production-demand/create-production-order', asyncHandler(async (req, res) => {
+    await salesService.createProductionOrderFromDemand(req.body);
+    res.status(201).json({});
   }));
 
   return router;

@@ -114,4 +114,51 @@ export class SausageApiClient {
   getLosses(): Promise<SausageLossDto[]> {
     return this.fetch<SausageLossDto[]>('/losses');
   }
+
+  // Sales Orders
+  getSalesOrders(): Promise<import('sausage-shared-types').SausageSalesOrderDto[]> {
+    return this.fetch<import('sausage-shared-types').SausageSalesOrderDto[]>('/sales-orders');
+  }
+
+  getSalesOrderById(id: string): Promise<import('sausage-shared-types').SausageSalesOrderDto> {
+    return this.fetch<import('sausage-shared-types').SausageSalesOrderDto>(`/sales-orders/${id}`);
+  }
+
+  createSalesOrder(input: import('sausage-shared-types').CreateSausageSalesOrderInput): Promise<import('sausage-shared-types').SausageSalesOrderDto> {
+    return this.fetch<import('sausage-shared-types').SausageSalesOrderDto>('/sales-orders', { method: 'POST', body: JSON.stringify(input) });
+  }
+
+  confirmSalesOrder(id: string): Promise<import('sausage-shared-types').SausageSalesOrderDto> {
+    return this.fetch<import('sausage-shared-types').SausageSalesOrderDto>(`/sales-orders/${id}/confirm`, { method: 'POST' });
+  }
+
+  cancelSalesOrder(id: string): Promise<import('sausage-shared-types').SausageSalesOrderDto> {
+    return this.fetch<import('sausage-shared-types').SausageSalesOrderDto>(`/sales-orders/${id}/cancel`, { method: 'POST' });
+  }
+
+  // Reservations
+  reserveSalesOrderItem(id: string, input: import('sausage-shared-types').CreateSausageReservationInput & { salesOrderItemId: string }): Promise<import('sausage-shared-types').SausageFinishedGoodsReservationDto> {
+    return this.fetch<import('sausage-shared-types').SausageFinishedGoodsReservationDto>(`/sales-orders/${id}/reserve`, { method: 'POST', body: JSON.stringify(input) });
+  }
+
+  releaseReservation(id: string, reason?: string): Promise<import('sausage-shared-types').SausageFinishedGoodsReservationDto> {
+    return this.fetch<import('sausage-shared-types').SausageFinishedGoodsReservationDto>(`/reservations/${id}/release`, { method: 'POST', body: JSON.stringify({ reason }) });
+  }
+
+  completeReservation(id: string): Promise<import('sausage-shared-types').SausageFinishedGoodsReservationDto> {
+    return this.fetch<import('sausage-shared-types').SausageFinishedGoodsReservationDto>(`/reservations/${id}/complete`, { method: 'POST' });
+  }
+
+  getReservations(): Promise<import('sausage-shared-types').SausageFinishedGoodsReservationDto[]> {
+    return this.fetch<import('sausage-shared-types').SausageFinishedGoodsReservationDto[]>('/reservations');
+  }
+
+  // Production Demand
+  getProductionDemand(): Promise<import('sausage-shared-types').SausageProductionDemandDto[]> {
+    return this.fetch<import('sausage-shared-types').SausageProductionDemandDto[]>('/production-demand');
+  }
+
+  createProductionOrderFromDemand(input: import('sausage-shared-types').CreateProductionOrderFromDemandInput): Promise<void> {
+    return this.fetch<void>('/production-demand/create-production-order', { method: 'POST', body: JSON.stringify(input) });
+  }
 }

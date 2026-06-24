@@ -11,6 +11,8 @@ import { DashboardScreen } from './screens/DashboardScreen';
 import { FinishedProductsScreen } from './screens/FinishedProductsScreen';
 import { LossesScreen } from './screens/LossesScreen';
 import { OrdersScreen } from './screens/OrdersScreen';
+import { SalesOrdersScreen } from './screens/SalesOrdersScreen';
+import { ProductionDemandScreen } from './screens/ProductionDemandScreen';
 import { RawMaterialsScreen } from './screens/RawMaterialsScreen';
 import { RecipesScreen } from './screens/RecipesScreen';
 import { TransfersScreen } from './screens/TransfersScreen';
@@ -25,6 +27,8 @@ const modalTitles: Record<ModalKind, string> = {
   finishedProduct: 'Добавить готовую продукцию',
   recipe: 'Новая рецептура',
   client: 'Новый клиент',
+  salesOrder: 'Новый заказ клиента',
+  createDemandOrder: 'Новый производственный заказ'
 };
 
 export default function App() {
@@ -81,6 +85,17 @@ export default function App() {
     }
   };
 
+  const runDatasetAction = async (action: () => Promise<void>) => {
+    setSubmittedMessage(null);
+    try {
+      await action();
+      fetchDataset();
+    } catch (err: any) {
+      console.error(err);
+      setError(err?.error?.message || err?.message || 'Не удалось выполнить операцию.');
+    }
+  };
+
   if (error) {
     return (
       <main className="loading-shell" style={{ color: 'var(--color-danger)' }}>
@@ -104,6 +119,22 @@ export default function App() {
     <AppShell activeScreen={activeScreen} onNavigate={setActiveScreen} onOpenModal={setActiveModal}>
       {activeScreen === 'dashboard' ? <DashboardScreen dashboard={dataset.dashboard} onOpenModal={setActiveModal} /> : null}
       {activeScreen === 'orders' ? <OrdersScreen orders={dataset.orders} /> : null}
+      {activeScreen === 'salesOrders' ? (
+        <SalesOrdersScreen
+          salesOrders={dataset.salesOrders}
+          onReserve={(orderId, itemId, quantityQty) => runDatasetAction(() => sausageProductionApi.reserveSalesOrderItem(orderId, itemId, quantityQty))}
+          onRelease={(reservationId) => runDatasetAction(() => sausageProductionApi.releaseReservation(reservationId))}
+          onComplete={(reservationId) => runDatasetAction(() => sausageProductionApi.completeReservation(reservationId))}
+        />
+      ) : null}
+      {activeScreen === 'productionDemand' ? (
+        <ProductionDemandScreen
+          productionDemand={dataset.productionDemand}
+          onCreateProductionOrder={(finishedProductId, quantityQty) =>
+            runDatasetAction(() => sausageProductionApi.createProductionOrderFromDemand(finishedProductId, quantityQty))
+          }
+        />
+      ) : null}
       {activeScreen === 'batches' ? <BatchesScreen batches={dataset.batches} /> : null}
       {activeScreen === 'transfers' ? <TransfersScreen movements={dataset.movements} /> : null}
       {activeScreen === 'rawMaterials' ? <RawMaterialsScreen rawMaterials={dataset.rawMaterials} /> : null}

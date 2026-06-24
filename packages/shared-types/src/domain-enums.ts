@@ -34,3 +34,19 @@ export type SausageLossReason =
   | 'EXPIRY'
   | 'CALIBRATION'
   | 'OTHER';
+
+export type SausageSalesOrderStatus =
+  | 'DRAFT'
+  | 'CONFIRMED'
+  | 'PARTIALLY_RESERVED'
+  | 'RESERVED'
+  | 'IN_PRODUCTION'
+  | 'READY'
+  | 'COMPLETED'
+  | 'CANCELLED';
+
+export type SausageReservationStatus =
+  | 'ACTIVE'
+  | 'RELEASED'
+  | 'COMPLETED'
+  | 'CANCELLED';

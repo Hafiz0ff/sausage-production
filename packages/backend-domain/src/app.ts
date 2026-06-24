@@ -2,6 +2,7 @@ import express from 'express';
 import { createSausageProductionRouter } from './routes/sausageProductionRouter';
 import { SausageStockService } from './services/SausageStockService';
 import { SausageProductionService } from './services/SausageProductionService';
+import { SausageSalesService } from './services/SausageSalesService';
 import { SausageRepositories } from './repositories/SausageRepositories';
 import { SausageAuthPort } from './ports/SausageAuthPort';
 import { SausageApiError, SAUSAGE_ERROR_CODES } from 'sausage-shared-types';
@@ -17,8 +18,9 @@ export function createApp(
 
   const stockService = new SausageStockService(repos, authPort);
   const productionService = new SausageProductionService(repos, authPort);
+  const salesService = new SausageSalesService(repos, authPort);
 
-  app.use('/api/sausage-production', createSausageProductionRouter(stockService, productionService));
+  app.use('/api/sausage-production', createSausageProductionRouter(stockService, productionService, salesService));
 
   app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
     if (err.error && err.error.code) {

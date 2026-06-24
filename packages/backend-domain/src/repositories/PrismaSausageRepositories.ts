@@ -123,6 +123,41 @@ function toLossDto(row: Prisma.SausageLossGetPayload<{}>): SausageLossDto {
   } as SausageLossDto;
 }
 
+type SalesOrderWithItems = Prisma.SausageSalesOrderGetPayload<{ include: { items: true } }>;
+function toSalesOrderDto(row: SalesOrderWithItems): import('sausage-shared-types').SausageSalesOrderDto {
+  return {
+    ...row,
+    clientId: row.clientId ?? undefined,
+    clientName: row.clientName ?? undefined,
+    externalOrderId: row.externalOrderId ?? undefined,
+    requestedDate: row.requestedDate ?? undefined,
+    dueDate: row.dueDate ?? undefined,
+    note: row.note ?? undefined,
+    createdAt: row.createdAt.toISOString(),
+    updatedAt: row.updatedAt.toISOString(),
+    items: row.items.map(toSalesOrderItemDto)
+  } as import('sausage-shared-types').SausageSalesOrderDto;
+}
+
+function toSalesOrderItemDto(row: Prisma.SausageSalesOrderItemGetPayload<{}>): import('sausage-shared-types').SausageSalesOrderItemDto {
+  return {
+    ...row,
+    createdAt: row.createdAt.toISOString(),
+    updatedAt: row.updatedAt.toISOString()
+  } as import('sausage-shared-types').SausageSalesOrderItemDto;
+}
+
+function toReservationDto(row: Prisma.SausageFinishedGoodsReservationGetPayload<{}>): import('sausage-shared-types').SausageFinishedGoodsReservationDto {
+  return {
+    ...row,
+    createdByName: row.createdByName ?? undefined,
+    releasedAt: row.releasedAt?.toISOString(),
+    completedAt: row.completedAt?.toISOString(),
+    reason: row.reason ?? undefined,
+    createdAt: row.createdAt.toISOString()
+  } as import('sausage-shared-types').SausageFinishedGoodsReservationDto;
+}
+
 async function assertUpdated(count: number): Promise<void> {
   if (count === 0) {
     throw new Error('Not found');
@@ -466,6 +501,166 @@ export class PrismaSausageRepositories implements SausageRepositories {
         }
       });
       return toLossDto(r);
+    }
+  };
+
+  readonly salesOrders: import('./SausageRepositories').SausageSalesOrderRepository = {
+    findMany: async (companyId) => {
+      const rows = await this.prisma.sausageSalesOrder.findMany({ where: { companyId }, include: { items: true } });
+      return rows.map(toSalesOrderDto);
+    },
+    findById: async (id, companyId) => {
+      const r = await this.prisma.sausageSalesOrder.findFirst({ where: { id, companyId }, include: { items: true } });
+      if (!r) return null;
+      return toSalesOrderDto(r);
+    },
+    create: async (data) => {
+      const r = await this.prisma.sausageSalesOrder.create({
+        data: {
+          id: data.id,
+          companyId: data.companyId,
+          number: data.number,
+          clientId: data.clientId,
+          clientName: data.clientName,
+          externalOrderId: data.externalOrderId,
+          status: data.status,
+          requestedDate: data.requestedDate,
+          dueDate: data.dueDate,
+          note: data.note,
+          createdAt: new Date(data.createdAt),
+          updatedAt: new Date(data.updatedAt),
+          items: {
+            create: data.items.map(i => ({
+              id: i.id,
+              companyId: i.companyId,
+              finishedProductId: i.finishedProductId,
+              finishedProductName: i.finishedProductName,
+              quantityQty: i.quantityQty,
+              reservedQty: i.reservedQty,
+              producedQty: i.producedQty,
+              shippedQty: i.shippedQty,
+              shortageQty: i.shortageQty,
+              createdAt: new Date(i.createdAt),
+              updatedAt: new Date(i.updatedAt)
+            }))
+          }
+        },
+        include: { items: true }
+      });
+      return toSalesOrderDto(r);
+    },
+    update: async (id, companyId, data) => {
+      const result = await this.prisma.sausageSalesOrder.updateMany({
+        where: { id, companyId },
+        data: {
+          clientId: data.clientId,
+          clientName: data.clientName,
+          externalOrderId: data.externalOrderId,
+          status: data.status,
+          requestedDate: data.requestedDate,
+          dueDate: data.dueDate,
+          note: data.note,
+          updatedAt: data.updatedAt ? new Date(data.updatedAt) : new Date()
+        }
+      });
+      await assertUpdated(result.count);
+      const updated = await this.salesOrders.findById(id, companyId);
+      if (!updated) throw new Error('Not found');
+      return updated;
+    }
+  };
+
+  readonly salesOrderItems: import('./SausageRepositories').SausageSalesOrderItemRepository = {
+    findMany: async (companyId) => {
+      const rows = await this.prisma.sausageSalesOrderItem.findMany({ where: { companyId } });
+      return rows.map(toSalesOrderItemDto);
+    },
+    findByOrderId: async (salesOrderId, companyId) => {
+      const rows = await this.prisma.sausageSalesOrderItem.findMany({ where: { salesOrderId, companyId } });
+      return rows.map(toSalesOrderItemDto);
+    },
+    create: async (data) => {
+      const r = await this.prisma.sausageSalesOrderItem.create({
+        data: {
+          id: data.id,
+          companyId: data.companyId,
+          salesOrderId: data.salesOrderId,
+          finishedProductId: data.finishedProductId,
+          finishedProductName: data.finishedProductName,
+          quantityQty: data.quantityQty,
+          reservedQty: data.reservedQty,
+          producedQty: data.producedQty,
+          shippedQty: data.shippedQty,
+          shortageQty: data.shortageQty,
+          createdAt: new Date(data.createdAt),
+          updatedAt: new Date(data.updatedAt)
+        }
+      });
+      return toSalesOrderItemDto(r);
+    },
+    update: async (id, companyId, data) => {
+      const result = await this.prisma.sausageSalesOrderItem.updateMany({
+        where: { id, companyId },
+        data: {
+          reservedQty: data.reservedQty,
+          producedQty: data.producedQty,
+          shippedQty: data.shippedQty,
+          shortageQty: data.shortageQty,
+          updatedAt: data.updatedAt ? new Date(data.updatedAt) : new Date()
+        }
+      });
+      await assertUpdated(result.count);
+      const r = await this.prisma.sausageSalesOrderItem.findFirst({ where: { id, companyId } });
+      if (!r) throw new Error('Not found');
+      return toSalesOrderItemDto(r);
+    }
+  };
+
+  readonly reservations: import('./SausageRepositories').SausageReservationRepository = {
+    findMany: async (companyId) => {
+      const rows = await this.prisma.sausageFinishedGoodsReservation.findMany({ where: { companyId } });
+      return rows.map(toReservationDto);
+    },
+    findById: async (id, companyId) => {
+      const r = await this.prisma.sausageFinishedGoodsReservation.findFirst({ where: { id, companyId } });
+      if (!r) return null;
+      return toReservationDto(r);
+    },
+    create: async (data) => {
+      const r = await this.prisma.sausageFinishedGoodsReservation.create({
+        data: {
+          id: data.id,
+          companyId: data.companyId,
+          salesOrderId: data.salesOrderId,
+          salesOrderItemId: data.salesOrderItemId,
+          finishedProductId: data.finishedProductId,
+          finishedProductName: data.finishedProductName,
+          quantityQty: data.quantityQty,
+          status: data.status,
+          createdByUserId: data.createdByUserId,
+          createdByName: data.createdByName,
+          createdAt: new Date(data.createdAt),
+          releasedAt: data.releasedAt ? new Date(data.releasedAt) : null,
+          completedAt: data.completedAt ? new Date(data.completedAt) : null,
+          reason: data.reason
+        }
+      });
+      return toReservationDto(r);
+    },
+    update: async (id, companyId, data) => {
+      const result = await this.prisma.sausageFinishedGoodsReservation.updateMany({
+        where: { id, companyId },
+        data: {
+          status: data.status,
+          releasedAt: data.releasedAt ? new Date(data.releasedAt) : null,
+          completedAt: data.completedAt ? new Date(data.completedAt) : null,
+          reason: data.reason
+        }
+      });
+      await assertUpdated(result.count);
+      const updated = await this.reservations.findById(id, companyId);
+      if (!updated) throw new Error('Not found');
+      return updated;
     }
   };
 

@@ -58,6 +58,27 @@ export interface SausageLossRepository {
   create(data: SausageLossDto): Promise<SausageLossDto>;
 }
 
+export interface SausageSalesOrderRepository {
+  findMany(companyId: string): Promise<import('sausage-shared-types').SausageSalesOrderDto[]>;
+  findById(id: string, companyId: string): Promise<import('sausage-shared-types').SausageSalesOrderDto | null>;
+  create(data: import('sausage-shared-types').SausageSalesOrderDto): Promise<import('sausage-shared-types').SausageSalesOrderDto>;
+  update(id: string, companyId: string, data: Partial<import('sausage-shared-types').SausageSalesOrderDto>): Promise<import('sausage-shared-types').SausageSalesOrderDto>;
+}
+
+export interface SausageSalesOrderItemRepository {
+  findMany(companyId: string): Promise<import('sausage-shared-types').SausageSalesOrderItemDto[]>;
+  findByOrderId(salesOrderId: string, companyId: string): Promise<import('sausage-shared-types').SausageSalesOrderItemDto[]>;
+  create(data: import('sausage-shared-types').SausageSalesOrderItemDto): Promise<import('sausage-shared-types').SausageSalesOrderItemDto>;
+  update(id: string, companyId: string, data: Partial<import('sausage-shared-types').SausageSalesOrderItemDto>): Promise<import('sausage-shared-types').SausageSalesOrderItemDto>;
+}
+
+export interface SausageReservationRepository {
+  findMany(companyId: string): Promise<import('sausage-shared-types').SausageFinishedGoodsReservationDto[]>;
+  findById(id: string, companyId: string): Promise<import('sausage-shared-types').SausageFinishedGoodsReservationDto | null>;
+  create(data: import('sausage-shared-types').SausageFinishedGoodsReservationDto): Promise<import('sausage-shared-types').SausageFinishedGoodsReservationDto>;
+  update(id: string, companyId: string, data: Partial<import('sausage-shared-types').SausageFinishedGoodsReservationDto>): Promise<import('sausage-shared-types').SausageFinishedGoodsReservationDto>;
+}
+
 export interface SausageRepositories {
   rawMaterials: SausageRawMaterialRepository;
   finishedProducts: SausageFinishedProductRepository;
@@ -67,6 +88,9 @@ export interface SausageRepositories {
   batches: SausageProductionBatchRepository;
   movements: SausageStockMovementRepository;
   losses: SausageLossRepository;
+  salesOrders: SausageSalesOrderRepository;
+  salesOrderItems: SausageSalesOrderItemRepository;
+  reservations: SausageReservationRepository;
 
   runTransaction<T>(fn: (tx: SausageRepositories) => Promise<T>): Promise<T>;
 }

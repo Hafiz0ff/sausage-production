@@ -45,6 +45,9 @@ export const sausageProductionApi = {
       recipesDto,
       clientsDto,
       ordersDto,
+      salesOrdersDto,
+      reservationsDto,
+      productionDemandDto,
       batchesDto,
       movementsDto,
       lossesDto
@@ -55,6 +58,9 @@ export const sausageProductionApi = {
       apiClient.getRecipes(),
       apiClient.getClients(),
       apiClient.getOrders(),
+      apiClient.getSalesOrders(),
+      apiClient.getReservations(),
+      apiClient.getProductionDemand(),
       apiClient.getBatches(),
       apiClient.getStockMovements(),
       apiClient.getLosses()
@@ -128,6 +134,12 @@ export const sausageProductionApi = {
       }))
     };
 
+    const activeReservationByItemId = new Map(
+      reservationsDto
+        .filter(reservation => reservation.status === 'ACTIVE')
+        .map(reservation => [reservation.salesOrderItemId, reservation.id])
+    );
+
     return {
       rawMaterials: rawMaterialsDto.map(r => ({
         id: r.id,
@@ -179,6 +191,44 @@ export const sausageProductionApi = {
         progress: o.progressPercent,
         dueAt: o.dueAt || new Date().toISOString().slice(11, 16),
         shift: o.shift || 'Утро'
+      })),
+      salesOrders: salesOrdersDto.map(o => ({
+        id: o.id,
+        number: o.number,
+        clientId: o.clientId || '',
+        clientName: o.clientName || '',
+        status: o.status,
+        createdAt: o.createdAt,
+        items: o.items.map(i => ({
+          id: i.id,
+          finishedProductId: i.finishedProductId,
+          finishedProductName: i.finishedProductName,
+          quantityQty: i.quantityQty,
+          reservedQty: i.reservedQty,
+          producedQty: i.producedQty,
+          shippedQty: i.shippedQty,
+          shortageQty: i.shortageQty,
+          activeReservationId: activeReservationByItemId.get(i.id),
+          priceAmount: 0,
+          costAmount: 0
+        }))
+      })),
+      reservations: reservationsDto.map(reservation => ({
+        id: reservation.id,
+        salesOrderId: reservation.salesOrderId,
+        salesOrderItemId: reservation.salesOrderItemId,
+        finishedProductName: reservation.finishedProductName,
+        quantityQty: reservation.quantityQty,
+        status: reservation.status
+      })),
+      productionDemand: productionDemandDto.map(d => ({
+        finishedProductId: d.finishedProductId,
+        finishedProductName: d.finishedProductName,
+        requiredQty: d.requiredQty,
+        reservedQty: d.reservedQty,
+        availableQty: d.availableQty,
+        suggestedProductionQty: d.suggestedProductionQty,
+        shortageQty: d.shortageQty
       })),
       batches: batchesDto.map(b => ({
         id: b.id,
@@ -266,6 +316,18 @@ export const sausageProductionApi = {
           quantityQty: 2,
           reason: 'TRIMMING'
         });
+      } else if (kind === 'salesOrder') {
+        const order = await apiClient.createSalesOrder({
+          clientId: 'client-1',
+          clientName: 'Demo Client',
+          items: [{ finishedProductId: 'prod-1', quantityQty: 120 }]
+        });
+        await apiClient.confirmSalesOrder(order.id);
+      } else if (kind === 'createDemandOrder') {
+        await apiClient.createProductionOrderFromDemand({
+          finishedProductId: 'prod-1',
+          quantityQty: 50
+        });
       }
 
       return {
@@ -276,5 +338,25 @@ export const sausageProductionApi = {
     } catch (err: any) {
       throw err;
     }
+  },
+
+  async reserveSalesOrderItem(salesOrderId: string, salesOrderItemId: string, quantityQty: number): Promise<void> {
+    await apiClient.reserveSalesOrderItem(salesOrderId, {
+      salesOrderItemId,
+      quantityQty,
+      allowPartial: true
+    });
+  },
+
+  async releaseReservation(reservationId: string): Promise<void> {
+    await apiClient.releaseReservation(reservationId, 'Released from workshop dashboard');
+  },
+
+  async completeReservation(reservationId: string): Promise<void> {
+    await apiClient.completeReservation(reservationId);
+  },
+
+  async createProductionOrderFromDemand(finishedProductId: string, quantityQty: number): Promise<void> {
+    await apiClient.createProductionOrderFromDemand({ finishedProductId, quantityQty });
   },
 };

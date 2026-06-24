@@ -35,6 +35,8 @@ export const navigationGroups: NavigationGroup[] = [
     label: 'Основное',
     items: [
       { key: 'dashboard', label: 'Дашборд', shortLabel: 'Дашборд', primaryAction: { label: 'Новый заказ', modal: 'order' }, icon: Gauge },
+      { key: 'salesOrders', label: 'Заказы клиентов', shortLabel: 'Заказы клиентов', primaryAction: { label: 'Новый заказ клиента', modal: 'salesOrder' }, icon: ClipboardList },
+      { key: 'productionDemand', label: 'Потребность производства', shortLabel: 'Потребность', primaryAction: { label: 'Создать ПЗ', modal: 'createDemandOrder' }, icon: BarChart3 },
       { key: 'orders', label: 'Заказы на производство', shortLabel: 'Заказы', primaryAction: { label: 'Новый заказ', modal: 'order' }, icon: ClipboardList },
       { key: 'batches', label: 'Партии выпуска', shortLabel: 'Партии', primaryAction: { label: 'Оформить выпуск', modal: 'release' }, icon: PackageCheck },
       { key: 'transfers', label: 'Перемещения', shortLabel: 'Перемещения', primaryAction: { label: 'Передать в цех', modal: 'transfer' }, icon: Truck },
