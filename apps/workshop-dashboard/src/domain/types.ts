@@ -11,7 +11,9 @@ export type ScreenKey =
   | 'clients'
   | 'balances'
   | 'losses'
-  | 'analytics';
+  | 'analytics'
+  | 'documents'
+  | 'auditLogs';
 
 export type OrderStatus =
   | 'planned'
@@ -237,6 +239,26 @@ export interface ProductionDemand {
   suggestedProductionQty: number;
 }
 
+export interface DocumentRecord {
+  id: string;
+  number: string;
+  type: string;
+  status: string;
+  title?: string;
+  totalQty: number;
+  totalAmount: number;
+  createdAt: string;
+}
+
+export interface AuditLogRecord {
+  id: string;
+  action: string;
+  entityKind: string;
+  entityId: string;
+  userName?: string;
+  createdAt: string;
+}
+
 export interface WorkshopDataset {
   rawMaterials: RawMaterial[];
   finishedProducts: FinishedProduct[];
@@ -249,5 +271,7 @@ export interface WorkshopDataset {
   batches: ProductionBatch[];
   movements: StockMovement[];
   losses: LossRecord[];
+  documents: DocumentRecord[];
+  auditLogs: AuditLogRecord[];
   dashboard: DashboardSnapshot;
 }

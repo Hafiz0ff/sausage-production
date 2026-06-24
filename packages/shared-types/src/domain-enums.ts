@@ -87,3 +87,52 @@ export type SausageLossStage =
   | 'FINISHED_WAREHOUSE'
   | 'QUALITY_CONTROL'
   | 'OTHER';
+
+export type SausageDocumentType =
+  | 'RAW_RECEIPT'
+  | 'RAW_TRANSFER'
+  | 'PRODUCTION_BATCH_ACT'
+  | 'WRITE_OFF_ACT'
+  | 'STOCK_ADJUSTMENT'
+  | 'QUALITY_CHECK_ACT';
+
+export type SausageDocumentStatus =
+  | 'DRAFT'
+  | 'POSTED'
+  | 'CANCELLED';
+
+export type SausageDocumentItemKind =
+  | 'RAW_MATERIAL'
+  | 'FINISHED_PRODUCT'
+  | 'LOSS'
+  | 'SERVICE'
+  | 'OTHER';
+
+export type SausageAuditAction =
+  | 'DOCUMENT_CREATED'
+  | 'DOCUMENT_POSTED'
+  | 'DOCUMENT_CANCELLED'
+  | 'RAW_RECEIVED'
+  | 'RAW_TRANSFERRED'
+  | 'BATCH_RELEASED'
+  | 'QUALITY_CHECKED'
+  | 'LOSS_WRITTEN_OFF'
+  | 'LOSS_APPROVED'
+  | 'RESERVATION_CREATED'
+  | 'RESERVATION_RELEASED'
+  | 'RESERVATION_COMPLETED'
+  | 'STOCK_ADJUSTED';
+
+export type SausageAuditEntityKind =
+  | 'DOCUMENT'
+  | 'DOCUMENT_LINE'
+  | 'RAW_MATERIAL'
+  | 'FINISHED_PRODUCT'
+  | 'PRODUCTION_ORDER'
+  | 'PRODUCTION_BATCH'
+  | 'QUALITY_CHECK'
+  | 'LOSS'
+  | 'STOCK'
+  | 'STOCK_MOVEMENT'
+  | 'RESERVATION'
+  | 'CLIENT';

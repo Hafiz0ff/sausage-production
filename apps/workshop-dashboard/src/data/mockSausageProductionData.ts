@@ -148,7 +148,9 @@ export const mockSausageProductionData: WorkshopDataset = {
       shortageQty: 0,
       suggestedProductionQty: 0
     }
-  ]
+  ],
+  documents: [],
+  auditLogs: []
 };
 
 mockSausageProductionData.dashboard.activeOrders = mockSausageProductionData.orders;

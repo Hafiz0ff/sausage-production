@@ -289,3 +289,84 @@ model SausageQualityCheck {
   @@index([productionBatchId])
   @@map("sausage_quality_checks")
 }
+
+model SausageDocument {
+  id                 String   @id @default(uuid())
+  companyId          String   @map("company_id")
+  type               String
+  number             String
+  status             String
+  title              String?
+  sourceEntityKind   String?  @map("source_entity_kind")
+  sourceEntityId     String?  @map("source_entity_id")
+  externalDocumentId String?  @map("external_document_id")
+  relatedOrderId     String?  @map("related_order_id")
+  relatedBatchId     String?  @map("related_batch_id")
+  clientId           String?  @map("client_id")
+  clientName         String?  @map("client_name")
+  totalQty           Float    @map("total_qty")
+  totalAmount        Float    @map("total_amount")
+  currency           String?
+  note               String?
+  createdByUserId    String   @map("created_by_user_id")
+  createdByName      String?  @map("created_by_name")
+  postedByUserId     String?  @map("posted_by_user_id")
+  postedByName       String?  @map("posted_by_name")
+  postedAt           DateTime? @map("posted_at")
+  cancelledByUserId  String?  @map("cancelled_by_user_id")
+  cancelledByName    String?  @map("cancelled_by_name")
+  cancelledAt        DateTime? @map("cancelled_at")
+  createdAt          DateTime @default(now()) @map("created_at")
+  updatedAt          DateTime @updatedAt @map("updated_at")
+
+  lines SausageDocumentLine[]
+
+  @@index([companyId])
+  @@unique([companyId, type, number])
+  @@map("sausage_documents")
+}
+
+model SausageDocumentLine {
+  id           String   @id @default(uuid())
+  companyId    String   @map("company_id")
+  documentId   String   @map("document_id")
+  lineNo       Int      @map("line_no")
+  itemKind     String   @map("item_kind")
+  itemId       String   @map("item_id")
+  itemName     String   @map("item_name")
+  quantityQty  Float    @map("quantity_qty")
+  unit         String
+  fromLocation String?  @map("from_location")
+  toLocation   String?  @map("to_location")
+  priceAmount  Float?   @map("price_amount")
+  costAmount   Float?   @map("cost_amount")
+  currency     String?
+  note         String?
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  document SausageDocument @relation(fields: [documentId], references: [id])
+
+  @@index([companyId])
+  @@index([documentId])
+  @@map("sausage_document_lines")
+}
+
+model SausageAuditLog {
+  id           String   @id @default(uuid())
+  companyId    String   @map("company_id")
+  action       String
+  entityKind   String   @map("entity_kind")
+  entityId     String   @map("entity_id")
+  documentId   String?  @map("document_id")
+  userId       String   @map("user_id")
+  userName     String?  @map("user_name")
+  beforeJson   Json?    @map("before_json")
+  afterJson    Json?    @map("after_json")
+  metadataJson Json?    @map("metadata_json")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  @@index([companyId])
+  @@index([entityKind, entityId])
+  @@map("sausage_audit_logs")
+}

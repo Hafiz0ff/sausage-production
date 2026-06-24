@@ -4,6 +4,8 @@ import { SausageStockService } from './services/SausageStockService';
 import { SausageProductionService } from './services/SausageProductionService';
 import { SausageSalesService } from './services/SausageSalesService';
 import { SausageQualityService } from './services/SausageQualityService';
+import { SausageAuditService } from './services/SausageAuditService';
+import { SausageDocumentService } from './services/SausageDocumentService';
 import { SausageRepositories } from './repositories/SausageRepositories';
 import { SausageAuthPort } from './ports/SausageAuthPort';
 import { SausageApiError, SAUSAGE_ERROR_CODES } from 'sausage-shared-types';
@@ -21,8 +23,10 @@ export function createApp(
   const productionService = new SausageProductionService(repos, authPort);
   const salesService = new SausageSalesService(repos, authPort);
   const qualityService = new SausageQualityService(repos, authPort);
+  const auditService = new SausageAuditService(repos, authPort);
+  const documentService = new SausageDocumentService(repos, auditService, authPort);
 
-  app.use('/api/sausage-production', createSausageProductionRouter(stockService, productionService, salesService, qualityService));
+  app.use('/api/sausage-production', createSausageProductionRouter(stockService, productionService, salesService, qualityService, documentService, auditService));
 
   app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
     if (err.error && err.error.code) {

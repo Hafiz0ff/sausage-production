@@ -50,4 +50,26 @@ describe('SausageApiClient', () => {
       })
     );
   });
+
+  it('calls TZ-008 document and audit endpoints from the contract', async () => {
+    const client = new SausageApiClient();
+    (global.fetch as any).mockResolvedValue({
+      ok: true,
+      json: vi.fn().mockResolvedValue({})
+    });
+
+    await client.createRawReceiptDocument({
+      lines: [{ rawMaterialId: 'raw-1', quantityQty: 10 }]
+    });
+    await client.getAuditLogs();
+
+    expect(global.fetch).toHaveBeenCalledWith(
+      '/api/sausage-production/documents/raw-receipt',
+      expect.objectContaining({
+        method: 'POST',
+        body: JSON.stringify({ lines: [{ rawMaterialId: 'raw-1', quantityQty: 10 }] })
+      })
+    );
+    expect(global.fetch).toHaveBeenCalledWith('/api/sausage-production/audit-log', expect.any(Object));
+  });
 });

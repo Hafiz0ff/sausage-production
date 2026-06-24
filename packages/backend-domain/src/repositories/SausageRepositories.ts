@@ -103,6 +103,20 @@ export interface SausageRepositories {
   salesOrderItems: SausageSalesOrderItemRepository;
   reservations: SausageReservationRepository;
   qualityChecks: SausageQualityCheckRepository;
+  documents: SausageDocumentRepository;
+  auditLogs: SausageAuditLogRepository;
 
   runTransaction<T>(fn: (tx: SausageRepositories) => Promise<T>): Promise<T>;
+}
+
+export interface SausageDocumentRepository {
+  findMany(companyId: string, filter?: import('sausage-shared-types').SausageDocumentFilterDto): Promise<import('sausage-shared-types').SausageDocumentDto[]>;
+  findById(id: string, companyId: string): Promise<import('sausage-shared-types').SausageDocumentDto | null>;
+  create(data: import('sausage-shared-types').SausageDocumentDto): Promise<import('sausage-shared-types').SausageDocumentDto>;
+  update(id: string, companyId: string, data: Partial<import('sausage-shared-types').SausageDocumentDto>): Promise<import('sausage-shared-types').SausageDocumentDto>;
+}
+
+export interface SausageAuditLogRepository {
+  findMany(companyId: string, filter?: import('sausage-shared-types').SausageAuditLogFilterDto): Promise<import('sausage-shared-types').SausageAuditLogDto[]>;
+  create(data: import('sausage-shared-types').SausageAuditLogDto): Promise<import('sausage-shared-types').SausageAuditLogDto>;
 }

@@ -50,7 +50,9 @@ export const sausageProductionApi = {
       productionDemandDto,
       batchesDto,
       movementsDto,
-      lossesDto
+      lossesDto,
+      documentsDto,
+      auditLogsDto
     ] = await Promise.all([
       apiClient.getDashboard(),
       apiClient.getRawMaterials(),
@@ -63,7 +65,9 @@ export const sausageProductionApi = {
       apiClient.getProductionDemand(),
       apiClient.getBatches(),
       apiClient.getStockMovements(),
-      apiClient.getLosses()
+      apiClient.getLosses(),
+      apiClient.getDocuments(),
+      apiClient.getAuditLogs()
     ]);
 
     const dashboard: DashboardSnapshot = {
@@ -270,6 +274,24 @@ export const sausageProductionApi = {
         operator: l.createdByUserId,
         approvedByUserId: l.approvedByUserId
       })),
+      documents: documentsDto.map(d => ({
+        id: d.id,
+        number: d.number,
+        type: d.type,
+        status: d.status,
+        title: d.title,
+        totalQty: d.totalQty,
+        totalAmount: d.totalAmount,
+        createdAt: d.createdAt
+      })),
+      auditLogs: auditLogsDto.map(a => ({
+        id: a.id,
+        action: a.action,
+        entityKind: a.entityKind,
+        entityId: a.entityId,
+        userName: a.userName,
+        createdAt: a.createdAt
+      })),
       dashboard
     };
   },
@@ -379,4 +401,24 @@ export const sausageProductionApi = {
   async createProductionOrderFromDemand(finishedProductId: string, quantityQty: number): Promise<void> {
     await apiClient.createProductionOrderFromDemand({ finishedProductId, quantityQty });
   },
+
+  async getDocuments(filter?: any) {
+    return apiClient.getDocuments(filter);
+  },
+
+  async getAuditLogs(filter?: any) {
+    return apiClient.getAuditLogs(filter);
+  },
+
+  async createDocument(input: any) {
+    return apiClient.createDocument(input);
+  },
+
+  async postDocument(id: string, input: any) {
+    return apiClient.postDocument(id, input);
+  },
+
+  async cancelDocument(id: string, input: any) {
+    return apiClient.cancelDocument(id, input);
+  }
 };

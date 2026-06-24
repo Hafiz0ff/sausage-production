@@ -18,7 +18,9 @@ import {
   SausageProductionOrderRepository,
   SausageProductionBatchRepository,
   SausageStockMovementRepository,
-  SausageLossRepository
+  SausageLossRepository,
+  SausageDocumentRepository,
+  SausageAuditLogRepository
 } from './SausageRepositories';
 
 export class InMemoryRepositories implements SausageRepositories {
@@ -160,6 +162,7 @@ export class InMemoryRepositories implements SausageRepositories {
       const idx = this.reservationsData.findIndex(x => x.id === id && x.companyId === companyId);
       if (idx === -1) throw new Error('Not found');
       this.reservationsData[idx] = { ...this.reservationsData[idx], ...data };
+      this.reservationsData[idx] = { ...this.reservationsData[idx], ...data };
       return this.reservationsData[idx];
     }
   };
@@ -169,6 +172,9 @@ export class InMemoryRepositories implements SausageRepositories {
     findById: async (id, companyId) => this.qualityChecksData.find(x => x.id === id && x.companyId === companyId) || null,
     create: async (data) => { this.qualityChecksData.push(data); return data; }
   };
+
+  public readonly documents = new InMemorySausageDocumentRepository();
+  public readonly auditLogs = new InMemorySausageAuditLogRepository();
 
   async runTransaction<T>(fn: (tx: SausageRepositories) => Promise<T>): Promise<T> {
     // In memory, we just run it directly. For real rollback we would clone states, but this is sufficient for tests.
@@ -188,5 +194,49 @@ export class InMemoryRepositories implements SausageRepositories {
     this.salesOrderItemsData = [];
     this.reservationsData = [];
     this.qualityChecksData = [];
+  }
+}
+
+export class InMemorySausageDocumentRepository implements SausageDocumentRepository {
+  private data: import('sausage-shared-types').SausageDocumentDto[] = [];
+
+  async findMany(companyId: string, filter?: import('sausage-shared-types').SausageDocumentFilterDto): Promise<import('sausage-shared-types').SausageDocumentDto[]> {
+    let result = this.data.filter(d => d.companyId === companyId);
+    if (filter?.type) result = result.filter(d => d.type === filter.type);
+    if (filter?.status) result = result.filter(d => d.status === filter.status);
+    return result;
+  }
+
+  async findById(id: string, companyId: string): Promise<import('sausage-shared-types').SausageDocumentDto | null> {
+    return this.data.find(d => d.id === id && d.companyId === companyId) || null;
+  }
+
+  async create(data: import('sausage-shared-types').SausageDocumentDto): Promise<import('sausage-shared-types').SausageDocumentDto> {
+    this.data.push(data);
+    return data;
+  }
+
+  async update(id: string, companyId: string, data: Partial<import('sausage-shared-types').SausageDocumentDto>): Promise<import('sausage-shared-types').SausageDocumentDto> {
+    const idx = this.data.findIndex(d => d.id === id && d.companyId === companyId);
+    if (idx === -1) throw new Error('Not found');
+    this.data[idx] = { ...this.data[idx], ...data };
+    return this.data[idx];
+  }
+}
+
+export class InMemorySausageAuditLogRepository implements SausageAuditLogRepository {
+  private data: import('sausage-shared-types').SausageAuditLogDto[] = [];
+
+  async findMany(companyId: string, filter?: import('sausage-shared-types').SausageAuditLogFilterDto): Promise<import('sausage-shared-types').SausageAuditLogDto[]> {
+    let result = this.data.filter(d => d.companyId === companyId);
+    if (filter?.action) result = result.filter(d => d.action === filter.action);
+    if (filter?.entityKind) result = result.filter(d => d.entityKind === filter.entityKind);
+    if (filter?.entityId) result = result.filter(d => d.entityId === filter.entityId);
+    return result;
+  }
+
+  async create(data: import('sausage-shared-types').SausageAuditLogDto): Promise<import('sausage-shared-types').SausageAuditLogDto> {
+    this.data.push(data);
+    return data;
   }
 }

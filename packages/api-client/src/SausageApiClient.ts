@@ -209,4 +209,63 @@ export class SausageApiClient {
   getLossSummary(): Promise<SausageLossSummaryDto> {
     return this.fetch<SausageLossSummaryDto>('/analytics/loss-summary');
   }
+  // Documents
+  getDocuments(filter?: import('sausage-shared-types').SausageDocumentFilterDto): Promise<import('sausage-shared-types').SausageDocumentDto[]> {
+    const qs = new URLSearchParams(filter as any).toString();
+    return this.fetch<import('sausage-shared-types').SausageDocumentDto[]>(`/documents${qs ? '?' + qs : ''}`);
+  }
+
+  getDocumentById(id: string): Promise<import('sausage-shared-types').SausageDocumentDto> {
+    return this.fetch<import('sausage-shared-types').SausageDocumentDto>(`/documents/${id}`);
+  }
+
+  createDocument(input: import('sausage-shared-types').CreateSausageDocumentInput): Promise<import('sausage-shared-types').SausageDocumentDto> {
+    return this.fetch<import('sausage-shared-types').SausageDocumentDto>('/documents', { method: 'POST', body: JSON.stringify(input) });
+  }
+
+  postDocument(id: string, input: import('sausage-shared-types').PostSausageDocumentInput): Promise<import('sausage-shared-types').SausageDocumentDto> {
+    return this.fetch<import('sausage-shared-types').SausageDocumentDto>(`/documents/${id}/post`, { method: 'POST', body: JSON.stringify(input) });
+  }
+
+  cancelDocument(id: string, input: import('sausage-shared-types').CancelSausageDocumentInput): Promise<import('sausage-shared-types').SausageDocumentDto> {
+    return this.fetch<import('sausage-shared-types').SausageDocumentDto>(`/documents/${id}/cancel`, { method: 'POST', body: JSON.stringify(input) });
+  }
+
+  getDocumentPrintView(id: string): Promise<import('sausage-shared-types').SausageDocumentPrintViewDto> {
+    return this.fetch<import('sausage-shared-types').SausageDocumentPrintViewDto>(`/documents/${id}/print-view`);
+  }
+
+  createRawReceiptDocument(input: import('sausage-shared-types').CreateRawReceiptDocumentInput): Promise<import('sausage-shared-types').SausageDocumentDto> {
+    return this.fetch<import('sausage-shared-types').SausageDocumentDto>('/documents/raw-receipt', { method: 'POST', body: JSON.stringify(input) });
+  }
+
+  createRawTransferDocument(input: import('sausage-shared-types').CreateRawTransferDocumentInput): Promise<import('sausage-shared-types').SausageDocumentDto> {
+    return this.fetch<import('sausage-shared-types').SausageDocumentDto>('/documents/raw-transfer', { method: 'POST', body: JSON.stringify(input) });
+  }
+
+  createWriteOffDocument(input: import('sausage-shared-types').CreateWriteOffDocumentInput): Promise<import('sausage-shared-types').SausageDocumentDto> {
+    return this.fetch<import('sausage-shared-types').SausageDocumentDto>('/documents/write-off', { method: 'POST', body: JSON.stringify(input) });
+  }
+
+  createStockAdjustmentDocument(input: import('sausage-shared-types').CreateStockAdjustmentDocumentInput): Promise<import('sausage-shared-types').SausageDocumentDto> {
+    return this.fetch<import('sausage-shared-types').SausageDocumentDto>('/documents/stock-adjustment', { method: 'POST', body: JSON.stringify(input) });
+  }
+
+  createProductionBatchAct(input: import('sausage-shared-types').CreateProductionBatchActInput): Promise<import('sausage-shared-types').SausageDocumentDto> {
+    return this.fetch<import('sausage-shared-types').SausageDocumentDto>('/documents/production-batch-act', { method: 'POST', body: JSON.stringify(input) });
+  }
+
+  createQualityCheckAct(input: import('sausage-shared-types').CreateQualityCheckActInput): Promise<import('sausage-shared-types').SausageDocumentDto> {
+    return this.fetch<import('sausage-shared-types').SausageDocumentDto>('/documents/quality-check-act', { method: 'POST', body: JSON.stringify(input) });
+  }
+
+  // Audit Logs
+  getAuditLogs(filter?: import('sausage-shared-types').SausageAuditLogFilterDto): Promise<import('sausage-shared-types').SausageAuditLogDto[]> {
+    const qs = new URLSearchParams(filter as any).toString();
+    return this.fetch<import('sausage-shared-types').SausageAuditLogDto[]>(`/audit-log${qs ? '?' + qs : ''}`);
+  }
+
+  getAuditLogsForEntity(entityKind: import('sausage-shared-types').SausageAuditEntityKind, entityId: string): Promise<import('sausage-shared-types').SausageAuditLogDto[]> {
+    return this.fetch<import('sausage-shared-types').SausageAuditLogDto[]>(`/audit-log/entity/${entityKind}/${entityId}`);
+  }
 }

@@ -16,6 +16,8 @@ import { ProductionDemandScreen } from './screens/ProductionDemandScreen';
 import { RawMaterialsScreen } from './screens/RawMaterialsScreen';
 import { RecipesScreen } from './screens/RecipesScreen';
 import { TransfersScreen } from './screens/TransfersScreen';
+import { DocumentsScreen } from './screens/DocumentsScreen';
+import { AuditLogsScreen } from './screens/AuditLogsScreen';
 
 const modalTitles: Record<ModalKind, string> = {
   transfer: 'Передача сырья в цех',
@@ -146,6 +148,8 @@ export default function App() {
       {activeScreen === 'balances' ? <BalancesScreen rawMaterials={dataset.rawMaterials} finishedProducts={dataset.finishedProducts} /> : null}
       {activeScreen === 'losses' ? <LossesScreen losses={dataset.losses} /> : null}
       {activeScreen === 'analytics' ? <AnalyticsScreen dataset={dataset} /> : null}
+      {activeScreen === 'documents' ? <DocumentsScreen documents={dataset.documents} /> : null}
+      {activeScreen === 'auditLogs' ? <AuditLogsScreen auditLogs={dataset.auditLogs} /> : null}
 
       {activeModal ? (
         <Modal

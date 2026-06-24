@@ -389,3 +389,181 @@ export interface SausageLossSummaryDto {
   approvedLossCount: number;
   unapprovedLossCount: number;
 }
+
+export interface SausageDocumentDto {
+  id: string;
+  companyId: string;
+  type: import('./domain-enums').SausageDocumentType;
+  number: string;
+  status: import('./domain-enums').SausageDocumentStatus;
+  title?: string;
+  sourceEntityKind?: string;
+  sourceEntityId?: string;
+  externalDocumentId?: string;
+  relatedOrderId?: string;
+  relatedBatchId?: string;
+  clientId?: string;
+  clientName?: string;
+  totalQty: number;
+  totalAmount: number;
+  currency?: string;
+  note?: string;
+  createdByUserId: string;
+  createdByName?: string;
+  postedByUserId?: string;
+  postedByName?: string;
+  postedAt?: string;
+  cancelledByUserId?: string;
+  cancelledByName?: string;
+  cancelledAt?: string;
+  createdAt: string;
+  updatedAt: string;
+  lines?: SausageDocumentLineDto[];
+}
+
+export interface SausageDocumentLineDto {
+  id: string;
+  companyId: string;
+  documentId: string;
+  lineNo: number;
+  itemKind: import('./domain-enums').SausageDocumentItemKind;
+  itemId: string;
+  itemName: string;
+  quantityQty: number;
+  unit: string;
+  fromLocation?: import('./domain-enums').SausageStockLocation;
+  toLocation?: import('./domain-enums').SausageStockLocation;
+  priceAmount?: number;
+  costAmount?: number;
+  currency?: string;
+  note?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface SausageAuditLogDto {
+  id: string;
+  companyId: string;
+  action: import('./domain-enums').SausageAuditAction;
+  entityKind: import('./domain-enums').SausageAuditEntityKind;
+  entityId: string;
+  documentId?: string;
+  userId: string;
+  userName?: string;
+  beforeJson?: any;
+  afterJson?: any;
+  metadataJson?: any;
+  createdAt: string;
+}
+
+export interface CreateSausageDocumentInput {
+  type: import('./domain-enums').SausageDocumentType;
+  title?: string;
+  sourceEntityKind?: string;
+  sourceEntityId?: string;
+  externalDocumentId?: string;
+  relatedOrderId?: string;
+  relatedBatchId?: string;
+  clientId?: string;
+  clientName?: string;
+  currency?: string;
+  note?: string;
+  lines: Array<{
+    itemKind: import('./domain-enums').SausageDocumentItemKind;
+    itemId: string;
+    itemName: string;
+    quantityQty: number;
+    unit: string;
+    fromLocation?: import('./domain-enums').SausageStockLocation;
+    toLocation?: import('./domain-enums').SausageStockLocation;
+    priceAmount?: number;
+    costAmount?: number;
+    currency?: string;
+    note?: string;
+  }>;
+}
+
+export interface PostSausageDocumentInput {
+  note?: string;
+}
+
+export interface CancelSausageDocumentInput {
+  note?: string;
+}
+
+export interface CreateRawReceiptDocumentInput {
+  supplierName?: string;
+  externalDocumentNo?: string;
+  note?: string;
+  lines: Array<{
+    rawMaterialId: string;
+    quantityQty: number;
+  }>;
+}
+
+export interface CreateRawTransferDocumentInput {
+  productionOrderId?: string;
+  note?: string;
+  lines: Array<{
+    rawMaterialId: string;
+    quantityQty: number;
+  }>;
+}
+
+export interface CreateWriteOffDocumentInput {
+  note?: string;
+  lines: Array<{
+    itemKind: 'RAW_MATERIAL' | 'FINISHED_PRODUCT';
+    itemId: string;
+    quantityQty: number;
+    reason: import('./domain-enums').SausageLossReason;
+    fromLocation: import('./domain-enums').SausageStockLocation;
+  }>;
+}
+
+export interface CreateStockAdjustmentDocumentInput {
+  note?: string;
+  lines: Array<{
+    itemKind: 'RAW_MATERIAL' | 'FINISHED_PRODUCT';
+    itemId: string;
+    quantityQty: number;
+    location: import('./domain-enums').SausageStockLocation;
+  }>;
+}
+
+export interface CreateProductionBatchActInput {
+  productionOrderId: string;
+  producedQty: number;
+  acceptedQty: number;
+  rejectedQty: number;
+  note?: string;
+}
+
+export interface CreateQualityCheckActInput {
+  productionBatchId: string;
+  checkedQty: number;
+  acceptedQty: number;
+  rejectedQty: number;
+  temperatureCelsius?: number;
+  humidityPercent?: number;
+  note?: string;
+}
+
+export interface SausageDocumentPrintViewDto {
+  html: string;
+}
+
+export interface SausageDocumentFilterDto {
+  type?: import('./domain-enums').SausageDocumentType;
+  status?: import('./domain-enums').SausageDocumentStatus;
+  limit?: number;
+  offset?: number;
+}
+
+export interface SausageAuditLogFilterDto {
+  action?: import('./domain-enums').SausageAuditAction;
+  entityKind?: import('./domain-enums').SausageAuditEntityKind;
+  entityId?: string;
+  limit?: number;
+  offset?: number;
+}

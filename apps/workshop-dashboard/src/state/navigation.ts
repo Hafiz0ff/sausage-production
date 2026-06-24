@@ -57,6 +57,8 @@ export const navigationGroups: NavigationGroup[] = [
       { key: 'balances', label: 'Остатки', shortLabel: 'Остатки', primaryAction: { label: 'Приемка', modal: 'receipt' }, icon: PackagePlus },
       { key: 'losses', label: 'Потери', shortLabel: 'Потери', primaryAction: { label: 'Списание', modal: 'writeOff' }, icon: PackageMinus },
       { key: 'analytics', label: 'Аналитика', shortLabel: 'Аналитика', primaryAction: { label: 'Обновить', modal: null }, icon: BarChart3 },
+      { key: 'documents', label: 'Документы', shortLabel: 'Документы', primaryAction: { label: 'Новый документ', modal: null }, icon: ScrollText },
+      { key: 'auditLogs', label: 'Аудит', shortLabel: 'Аудит', primaryAction: { label: 'Обновить', modal: null }, icon: ClipboardList },
     ],
   },
 ];

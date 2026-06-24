@@ -3,12 +3,16 @@ import { SausageStockService } from '../services/SausageStockService';
 import { SausageProductionService } from '../services/SausageProductionService';
 import { SausageSalesService } from '../services/SausageSalesService';
 import { SausageQualityService } from '../services/SausageQualityService';
+import { SausageDocumentService } from '../services/SausageDocumentService';
+import { SausageAuditService } from '../services/SausageAuditService';
 
 export function createSausageProductionRouter(
   stockService: SausageStockService,
   productionService: SausageProductionService,
   salesService: SausageSalesService,
-  qualityService: SausageQualityService
+  qualityService: SausageQualityService,
+  documentService: SausageDocumentService,
+  auditService: SausageAuditService
 ): Router {
   const router = Router();
 
@@ -277,6 +281,78 @@ export function createSausageProductionRouter(
   router.post('/production-demand/create-production-order', asyncHandler(async (req, res) => {
     await salesService.createProductionOrderFromDemand(req.body);
     res.status(201).json({});
+  }));
+
+  // Documents
+  router.get('/documents', asyncHandler(async (req, res) => {
+    res.json(await documentService.getDocuments(req.query));
+  }));
+
+  router.post('/documents/raw-receipt', asyncHandler(async (req, res) => {
+    const doc = await documentService.createRawReceiptDocument(req.body);
+    res.status(201).json(doc);
+  }));
+
+  router.post('/documents/raw-transfer', asyncHandler(async (req, res) => {
+    const doc = await documentService.createRawTransferDocument(req.body);
+    res.status(201).json(doc);
+  }));
+
+  router.post('/documents/write-off', asyncHandler(async (req, res) => {
+    const doc = await documentService.createWriteOffDocument(req.body);
+    res.status(201).json(doc);
+  }));
+
+  router.post('/documents/stock-adjustment', asyncHandler(async (req, res) => {
+    const doc = await documentService.createStockAdjustmentDocument(req.body);
+    res.status(201).json(doc);
+  }));
+
+  router.post('/documents/production-batch-act', asyncHandler(async (req, res) => {
+    const doc = await documentService.createProductionBatchAct(req.body);
+    res.status(201).json(doc);
+  }));
+
+  router.post('/documents/quality-check-act', asyncHandler(async (req, res) => {
+    const doc = await documentService.createQualityCheckAct(req.body);
+    res.status(201).json(doc);
+  }));
+
+  router.get('/documents/:id', asyncHandler(async (req, res) => {
+    const doc = await documentService.getDocumentById(req.params.id);
+    if (!doc) {
+      res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Not found' } });
+      return;
+    }
+    res.json(doc);
+  }));
+
+  router.get('/documents/:id/print-view', asyncHandler(async (req, res) => {
+    res.json(await documentService.getDocumentPrintView(req.params.id));
+  }));
+
+  router.post('/documents', asyncHandler(async (req, res) => {
+    const doc = await documentService.createDocument(req.body);
+    res.status(201).json(doc);
+  }));
+
+  router.post('/documents/:id/post', asyncHandler(async (req, res) => {
+    const doc = await documentService.postDocument(req.params.id, req.body);
+    res.json(doc);
+  }));
+
+  router.post('/documents/:id/cancel', asyncHandler(async (req, res) => {
+    const doc = await documentService.cancelDocument(req.params.id, req.body);
+    res.json(doc);
+  }));
+
+  // Audit Logs
+  router.get('/audit-log', asyncHandler(async (req, res) => {
+    res.json(await auditService.getAuditLogs(req.query));
+  }));
+
+  router.get('/audit-log/entity/:entityKind/:entityId', asyncHandler(async (req, res) => {
+    res.json(await auditService.getAuditLogsForEntity(req.params.entityKind as any, req.params.entityId));
   }));
 
   return router;

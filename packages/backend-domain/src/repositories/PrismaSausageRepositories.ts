@@ -19,8 +19,11 @@ import {
   SausageProductionOrderRepository,
   SausageProductionBatchRepository,
   SausageStockMovementRepository,
-  SausageLossRepository
+  SausageLossRepository,
+  SausageDocumentRepository,
+  SausageAuditLogRepository
 } from './SausageRepositories';
+import { toDocumentDto, toAuditLogDto } from './prisma-helpers-tz008';
 
 type TransactionClient = Omit<
   PrismaClient,
@@ -821,6 +824,126 @@ export class PrismaSausageRepositories implements SausageRepositories {
         }
       });
       return toQualityCheckDto(r);
+    }
+  };
+
+  readonly documents: SausageDocumentRepository = {
+    findMany: async (companyId, filter) => {
+      const where: any = { companyId };
+      if (filter?.type) where.type = filter.type;
+      if (filter?.status) where.status = filter.status;
+      const rows = await this.prisma.sausageDocument.findMany({ where, include: { lines: true }, take: filter?.limit, skip: filter?.offset, orderBy: { createdAt: 'desc' } });
+      return rows.map(toDocumentDto);
+    },
+    findById: async (id, companyId) => {
+      const r = await this.prisma.sausageDocument.findFirst({ where: { id, companyId }, include: { lines: true } });
+      if (!r) return null;
+      return toDocumentDto(r);
+    },
+    create: async (data) => {
+      const r = await this.prisma.sausageDocument.create({
+        data: {
+          id: data.id,
+          companyId: data.companyId,
+          type: data.type,
+          number: data.number,
+          status: data.status,
+          title: data.title,
+          sourceEntityKind: data.sourceEntityKind,
+          sourceEntityId: data.sourceEntityId,
+          externalDocumentId: data.externalDocumentId,
+          relatedOrderId: data.relatedOrderId,
+          relatedBatchId: data.relatedBatchId,
+          clientId: data.clientId,
+          clientName: data.clientName,
+          totalQty: data.totalQty,
+          totalAmount: data.totalAmount,
+          currency: data.currency,
+          note: data.note,
+          createdByUserId: data.createdByUserId,
+          createdByName: data.createdByName,
+          postedByUserId: data.postedByUserId,
+          postedByName: data.postedByName,
+          postedAt: data.postedAt ? new Date(data.postedAt) : null,
+          cancelledByUserId: data.cancelledByUserId,
+          cancelledByName: data.cancelledByName,
+          cancelledAt: data.cancelledAt ? new Date(data.cancelledAt) : null,
+          createdAt: new Date(data.createdAt),
+          updatedAt: new Date(data.updatedAt),
+          lines: {
+            create: data.lines?.map(l => ({
+              id: l.id,
+              companyId: l.companyId,
+              lineNo: l.lineNo,
+              itemKind: l.itemKind,
+              itemId: l.itemId,
+              itemName: l.itemName,
+              quantityQty: l.quantityQty,
+              unit: l.unit,
+              fromLocation: l.fromLocation,
+              toLocation: l.toLocation,
+              priceAmount: l.priceAmount,
+              costAmount: l.costAmount,
+              currency: l.currency,
+              note: l.note,
+              createdAt: new Date(l.createdAt),
+              updatedAt: new Date(l.updatedAt),
+            }))
+          }
+        },
+        include: { lines: true }
+      });
+      return toDocumentDto(r);
+    },
+    update: async (id, companyId, data) => {
+      const result = await this.prisma.sausageDocument.updateMany({
+        where: { id, companyId },
+        data: {
+          status: data.status,
+          postedByUserId: data.postedByUserId,
+          postedByName: data.postedByName,
+          postedAt: data.postedAt ? new Date(data.postedAt) : null,
+          cancelledByUserId: data.cancelledByUserId,
+          cancelledByName: data.cancelledByName,
+          cancelledAt: data.cancelledAt ? new Date(data.cancelledAt) : null,
+          note: data.note,
+          updatedAt: data.updatedAt ? new Date(data.updatedAt) : new Date()
+        }
+      });
+      await assertUpdated(result.count);
+      const updated = await this.documents.findById(id, companyId);
+      if (!updated) throw new Error('Not found');
+      return updated;
+    }
+  };
+
+  readonly auditLogs: SausageAuditLogRepository = {
+    findMany: async (companyId, filter) => {
+      const where: any = { companyId };
+      if (filter?.action) where.action = filter.action;
+      if (filter?.entityKind) where.entityKind = filter.entityKind;
+      if (filter?.entityId) where.entityId = filter.entityId;
+      const rows = await this.prisma.sausageAuditLog.findMany({ where, take: filter?.limit, skip: filter?.offset, orderBy: { createdAt: 'desc' } });
+      return rows.map(toAuditLogDto);
+    },
+    create: async (data) => {
+      const r = await this.prisma.sausageAuditLog.create({
+        data: {
+          id: data.id,
+          companyId: data.companyId,
+          action: data.action,
+          entityKind: data.entityKind,
+          entityId: data.entityId,
+          documentId: data.documentId,
+          userId: data.userId,
+          userName: data.userName,
+          beforeJson: data.beforeJson ? data.beforeJson : Prisma.JsonNull,
+          afterJson: data.afterJson ? data.afterJson : Prisma.JsonNull,
+          metadataJson: data.metadataJson ? data.metadataJson : Prisma.JsonNull,
+          createdAt: new Date(data.createdAt)
+        }
+      });
+      return toAuditLogDto(r);
     }
   };
 
