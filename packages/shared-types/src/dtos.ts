@@ -1,0 +1,215 @@
+import { SausageStockLocation, SausageStockStatus, SausageProductionOrderStatus, SausageMovementType, SausageLossReason } from './domain-enums';
+
+export interface SausageRawMaterialDto {
+  id: string;
+  companyId: string;
+  name: string;
+  group: string;
+  unit: 'kg' | 'pcs' | 'pack';
+  warehouseQty: number;
+  workshopQty: number;
+  reservedQty: number;
+  minQty: number;
+  status: SausageStockStatus;
+  supplierName?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface SausageFinishedProductDto {
+  id: string;
+  companyId: string;
+  name: string;
+  sku: string;
+  unit: 'kg' | 'pcs' | 'pack';
+  stockQty: number;
+  stockPcs?: number;
+  reservedQty: number;
+  shelfLifeDays?: number;
+  status: SausageStockStatus;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface SausageRecipeDto {
+  id: string;
+  companyId: string;
+  finishedProductId: string;
+  finishedProductName: string;
+  outputQty: number;
+  expectedYieldPercent: number;
+  items: SausageRecipeItemDto[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface SausageRecipeItemDto {
+  id: string;
+  rawMaterialId: string;
+  rawMaterialName: string;
+  quantityQty: number;
+}
+
+export interface SausageClientDto {
+  id: string;
+  companyId: string;
+  name: string;
+  segment: 'RETAIL' | 'WHOLESALE' | 'HORECA' | 'INTERNAL' | 'OTHER';
+  phone?: string;
+  externalClientId?: string;
+  balanceAmount?: number;
+  balanceCurrency?: 'TJS' | 'USD';
+  lastOrderAt?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface SausageProductionOrderDto {
+  id: string;
+  companyId: string;
+  number: string;
+  finishedProductId: string;
+  finishedProductName: string;
+  quantityQty: number;
+  clientId?: string;
+  clientName?: string;
+  status: SausageProductionOrderStatus;
+  progressPercent: number;
+  dueAt?: string;
+  shift?: string;
+  externalOrderId?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface SausageProductionBatchDto {
+  id: string;
+  companyId: string;
+  batchNo: string;
+  productionOrderId: string;
+  productionOrderNumber: string;
+  finishedProductId: string;
+  finishedProductName: string;
+  producedQty: number;
+  acceptedQty: number;
+  rejectedQty: number;
+  yieldPercent: number;
+  releasedAt: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface SausageStockMovementDto {
+  id: string;
+  companyId: string;
+  docNo: string;
+  type: SausageMovementType;
+  itemKind: 'RAW_MATERIAL' | 'FINISHED_PRODUCT';
+  itemId: string;
+  itemName: string;
+  quantityQty: number;
+  fromLocation: SausageStockLocation;
+  toLocation: SausageStockLocation;
+  productionOrderId?: string;
+  productionBatchId?: string;
+  reason?: string;
+  createdByUserId: string;
+  createdByName?: string;
+  createdAt: string;
+}
+
+export interface SausageLossDto {
+  id: string;
+  companyId: string;
+  docNo: string;
+  itemKind: 'RAW_MATERIAL' | 'FINISHED_PRODUCT';
+  itemId: string;
+  itemName: string;
+  reason: SausageLossReason;
+  quantityQty: number;
+  costAmount?: number;
+  costCurrency?: 'TJS' | 'USD';
+  productionOrderId?: string;
+  productionBatchId?: string;
+  createdByUserId: string;
+  createdByName?: string;
+  createdAt: string;
+}
+
+// Commands
+export interface CreateSausageRawMaterialInput {
+  name: string;
+  group: string;
+  unit: 'kg' | 'pcs' | 'pack';
+  minQty: number;
+  supplierName?: string;
+}
+
+export interface ReceiveSausageRawMaterialInput {
+  rawMaterialId: string;
+  quantityQty: number;
+  supplierName?: string;
+  externalDocumentNo?: string;
+  note?: string;
+}
+
+export interface TransferSausageRawToWorkshopInput {
+  rawMaterialId: string;
+  quantityQty: number;
+  productionOrderId?: string;
+  note?: string;
+}
+
+export interface CreateSausageProductionOrderInput {
+  finishedProductId: string;
+  quantityQty: number;
+  clientId?: string;
+  clientName?: string;
+  dueAt?: string;
+  shift?: string;
+  externalOrderId?: string;
+}
+
+export interface StartSausageProductionOrderInput {
+  productionOrderId: string;
+}
+
+export interface ReleaseSausageProductionBatchInput {
+  productionOrderId: string;
+  producedQty: number;
+  acceptedQty: number;
+  rejectedQty: number;
+  lossReason?: SausageLossReason;
+  note?: string;
+}
+
+export interface WriteOffSausageStockInput {
+  itemKind: 'RAW_MATERIAL' | 'FINISHED_PRODUCT';
+  itemId: string;
+  location: SausageStockLocation;
+  quantityQty: number;
+  reason: SausageLossReason;
+  note?: string;
+}
+
+export interface SausageDashboardDto {
+  metrics: Array<{
+    id: string;
+    label: string;
+    value: string;
+    unit?: string;
+    delta?: string;
+    tone: 'accent' | 'success' | 'warning' | 'danger' | 'info' | 'neutral';
+  }>;
+  activeOrders: SausageProductionOrderDto[];
+  criticalRawStock: SausageRawMaterialDto[];
+  hourlyOutput: Array<{ hour: string; valueQty: number }>;
+  recentEvents: Array<{
+    id: string;
+    text: string;
+    meta: string;
+    tone: 'accent' | 'success' | 'warning' | 'danger' | 'info' | 'neutral';
+  }>;
+  finishedProducts: SausageFinishedProductDto[];
+  losses: SausageLossDto[];
+}

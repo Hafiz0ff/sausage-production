@@ -1,0 +1,17 @@
+{
+  "name": "sausage-production-monorepo",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "build": "npm run build -w sausage-shared-types && npm run build -w sausage-api-client && npm run build -w sausage-backend-domain",
+    "test": "npm run test --workspaces --if-present"
+  },
+  "devDependencies": {
+    "typescript": "^5.4.5",
+    "@types/node": "^20.12.7"
+  }
+}
